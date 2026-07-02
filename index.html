@@ -528,7 +528,22 @@ const DEVICE_ID = (function(){
 let fbApp=null, fbAuth=null, fbDb=null, fbUser=null, fbUnsubscribe=null;
 let cloudPushTimer=null;
 
-function getFirebaseConfig(){ return (STATE.settings && STATE.settings.firebase) || null; }
+// Default Firebase project config (baked in so every device works out of the box —
+// these client-side keys are meant to be public; access is protected by Firestore
+// security rules + per-user auth, not by hiding this config).
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBdQ0k8uNEnTmubDs0hHxtwo3aUDHyD2rA",
+  authDomain: "en0702.firebaseapp.com",
+  projectId: "en0702",
+  storageBucket: "en0702.firebasestorage.app",
+  messagingSenderId: "783411254957",
+  appId: "1:783411254957:web:3852a6b89a07652cbd9824"
+};
+function getFirebaseConfig(){
+  const custom = (STATE.settings && STATE.settings.firebase);
+  if(custom && custom.apiKey) return custom;
+  return DEFAULT_FIREBASE_CONFIG;
+}
 function setSyncDot(state){
   // state: 'off' | 'pending' | 'on'
   const el = document.getElementById('syncDot');
@@ -758,26 +773,22 @@ function openSettingsModal(){
     <h3>設定</h3>
 
     <div style="font-size:12.5px;color:var(--sub);font-weight:700;margin-bottom:6px;">☁️ 雲端同步（跨裝置）</div>
-    <div style="font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px;">
-      設定一次 Firebase 專案資訊後，手機/電腦登入同一組帳號，進度、紅黃綠卡、筆記會自動即時同步。
+    <div style="font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:14px;">
+      已內建連線設定，每台裝置只要用同一組帳號密碼登入，進度、紅黃綠卡、筆記就會自動即時同步，不需要再輸入任何技術欄位。
     </div>
-    <details style="margin-bottom:12px;">
-      <summary style="font-size:12px;color:var(--teal);cursor:pointer;">還沒設定 Firebase？點這裡看填哪6個欄位</summary>
-      <div style="font-size:11.5px;color:var(--sub-2);line-height:1.7;margin-top:8px;">
-        1. 到 console.firebase.google.com 建立專案<br>
-        2. 左側 Build → Authentication → Get Started → 啟用「Email/Password」<br>
-        3. 左側 Build → Firestore Database → 建立資料庫<br>
-        4. 齒輪 Project settings → 下方「Your apps」→ 點 &lt;/&gt; 新增網頁應用程式<br>
-        5. 複製出現的 firebaseConfig 六個值，貼到下面對應欄位
+    <details style="margin-bottom:14px;">
+      <summary style="font-size:12px;color:var(--sub-2);cursor:pointer;">進階：想改用別的 Firebase 專案？</summary>
+      <div style="font-size:11.5px;color:var(--sub-2);line-height:1.7;margin:8px 0;">
+        一般不需要動這裡。若你想切換成另一個 Firebase 專案，才需要填以下6個欄位（留空則使用內建設定）。
       </div>
-    </details>
-    <div class="field"><input type="text" id="fbApiKey" placeholder="apiKey" value="${cfg?cfg.apiKey||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
+      <div class="field"><input type="text" id="fbApiKey" placeholder="apiKey" value="${cfg?cfg.apiKey||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
     <div class="field"><input type="text" id="fbAuthDomain" placeholder="authDomain" value="${cfg?cfg.authDomain||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
     <div class="field"><input type="text" id="fbProjectId" placeholder="projectId" value="${cfg?cfg.projectId||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
     <div class="field"><input type="text" id="fbStorageBucket" placeholder="storageBucket" value="${cfg?cfg.storageBucket||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
     <div class="field"><input type="text" id="fbMessagingSenderId" placeholder="messagingSenderId" value="${cfg?cfg.messagingSenderId||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
     <div class="field"><input type="text" id="fbAppId" placeholder="appId" value="${cfg?cfg.appId||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:10px;"></div>
-    <button class="btn btn-secondary" id="saveFbConfigBtn" style="width:100%;margin-bottom:14px;">儲存雲端設定</button>
+      <button class="btn btn-secondary" id="saveFbConfigBtn" style="width:100%;">套用自訂設定</button>
+    </details>
 
     <div id="authStatusWrap" style="margin-bottom:20px;"></div>
 
