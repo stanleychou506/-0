@@ -36,6 +36,19 @@ body{
   -webkit-font-smoothing:antialiased;
 }
 .app{max-width:520px; margin:0 auto; padding:18px 16px 8px;}
+@media (min-width:820px){
+  body{ background:radial-gradient(1400px 900px at 50% -10%, #16202b 0%, var(--bg) 55%); }
+  .app{max-width:680px; padding-top:28px;}
+  .tabbar{max-width:680px; left:50%; transform:translateX(-50%); border-radius:20px 20px 0 0; border-left:1px solid var(--line); border-right:1px solid var(--line);}
+  .hero .days{font-size:76px;}
+  .card{padding:22px;}
+  .subject-tab, .year-grid button, .select-grid button, .mini-btn, .topic-pick, .btn{cursor:pointer;}
+  .topic-head:hover, .mini-card:hover, .year-chip:hover, .filter-chip:hover{opacity:.85;}
+}
+@media (min-width:1080px){
+  .app{max-width:760px;}
+  .tabbar{max-width:760px;}
+}
 .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
 .brand{display:flex; align-items:center; gap:8px;}
 .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
@@ -232,7 +245,14 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
 .empty-state{text-align:center; padding:40px 20px; color:var(--sub-2); font-size:13px;}
 .toast{position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:var(--panel-2); border:1px solid var(--amber); color:var(--text); padding:10px 18px; border-radius:30px; font-size:12.5px; z-index:200; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--sub-2);flex-shrink:0;}
+.sync-dot.on{background:var(--green); box-shadow:0 0 6px var(--green);}
+.sync-dot.off{background:var(--red);}
+.sync-dot.pending{background:var(--amber); animation:pulse 1.2s infinite;}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="app">
@@ -240,6 +260,7 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
   <div class="topbar">
     <div class="brand"><span class="dot"></span><h1>技師考衝刺站</h1></div>
     <div style="display:flex;align-items:center;gap:10px;">
+      <span class="sync-dot" id="syncDot" title="雲端同步狀態" onclick="openSettingsModal()"></span>
       <div class="clock" id="clockNow">--:--:--</div>
       <button onclick="openSettingsModal()" style="background:none;border:none;color:var(--sub-2);padding:2px;cursor:pointer;display:flex;">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -493,7 +514,144 @@ function saveState(){
     if(HAS_CLAUDE_STORAGE){
       try{ await window.storage.set('app-state', payload); }catch(e){ console.warn('window.storage save failed', e); }
     }
+    if(fbUser) pushStateToCloud();
   }, 250);
+}
+
+/* ================= CLOUD SYNC (Firebase) ================= */
+const DEVICE_ID = (function(){
+  let id = null;
+  try{ id = localStorage.getItem('exam-device-id'); }catch(e){}
+  if(!id){ id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); try{ localStorage.setItem('exam-device-id', id); }catch(e){} }
+  return id;
+})();
+let fbApp=null, fbAuth=null, fbDb=null, fbUser=null, fbUnsubscribe=null;
+let cloudPushTimer=null;
+
+function getFirebaseConfig(){ return (STATE.settings && STATE.settings.firebase) || null; }
+function setSyncDot(state){
+  // state: 'off' | 'pending' | 'on'
+  const el = document.getElementById('syncDot');
+  if(!el) return;
+  el.className = 'sync-dot ' + state;
+  el.title = state==='on' ? '雲端同步中（已登入）' : state==='pending' ? '同步處理中...' : '未啟用雲端同步';
+}
+function initFirebaseIfConfigured(){
+  const cfg = getFirebaseConfig();
+  if(!cfg || !cfg.apiKey){ setSyncDot('off'); return false; }
+  if(typeof firebase==='undefined'){
+    setSyncDot('off');
+    toast('Firebase 程式庫還沒載入完成，請稍等幾秒再試一次');
+    return false;
+  }
+  try{
+    if(!fbApp){
+      fbApp = firebase.initializeApp(cfg);
+      fbAuth = firebase.auth();
+      fbDb = firebase.firestore();
+      fbAuth.onAuthStateChanged(onAuthChanged);
+    }
+    updateAuthUI();
+    return true;
+  }catch(e){
+    console.error('firebase init failed', e);
+    setSyncDot('off');
+    toast('雲端連線設定有誤：'+(e.message||e.code||'請檢查6個欄位是否貼對'));
+    return false;
+  }
+}
+function onAuthChanged(user){
+  fbUser = user;
+  updateAuthUI();
+  if(user){
+    setSyncDot('pending');
+    subscribeToCloudState();
+  } else {
+    setSyncDot('off');
+    if(fbUnsubscribe){ fbUnsubscribe(); fbUnsubscribe=null; }
+  }
+}
+function subscribeToCloudState(){
+  if(!fbUser || !fbDb) return;
+  if(fbUnsubscribe) fbUnsubscribe();
+  fbUnsubscribe = fbDb.collection('users').doc(fbUser.uid).collection('state').doc('main')
+    .onSnapshot((doc)=>{
+      if(doc.exists){
+        const cloudState = doc.data();
+        if(cloudState._updatedBy !== DEVICE_ID){
+          STATE = deepMergeDefaults(cloudState);
+          try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){}
+          refreshAllViews();
+          toast('已從雲端同步最新資料');
+        }
+      } else {
+        // first login on this account: push current local state up as the seed
+        pushStateToCloud();
+      }
+      setSyncDot('on');
+    }, (err)=>{ console.warn('cloud sync listen error', err); setSyncDot('off'); });
+}
+async function pushStateToCloud(){
+  if(!fbUser || !fbDb) return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(async ()=>{
+    setSyncDot('pending');
+    try{
+      const payload = Object.assign({}, STATE, {_updatedBy: DEVICE_ID, _ts: Date.now()});
+      await fbDb.collection('users').doc(fbUser.uid).collection('state').doc('main').set(payload);
+      setSyncDot('on');
+    }catch(e){ console.warn('cloud push failed', e); setSyncDot('off'); }
+  }, 150);
+}
+function refreshAllViews(){
+  renderHome();
+  if(document.getElementById('view-plan').classList.contains('active')) renderPlan();
+  if(document.getElementById('view-log').classList.contains('active')) renderLog();
+  if(document.getElementById('mistakeList')) renderMistakeBook();
+  renderTimerSubjectGrid(); renderTopicPicker(); renderYearPicker();
+}
+async function firebaseSignUp(email, password){
+  if(!fbAuth) return;
+  try{ await fbAuth.createUserWithEmailAndPassword(email, password); toast('註冊成功，已登入'); }
+  catch(e){
+    if(e.code==='auth/email-already-in-use'){ return firebaseSignIn(email, password); }
+    toast('註冊失敗：'+(e.message||e.code));
+  }
+}
+async function firebaseSignIn(email, password){
+  if(!fbAuth) return;
+  try{ await fbAuth.signInWithEmailAndPassword(email, password); toast('登入成功'); }
+  catch(e){ toast('登入失敗：'+(e.message||e.code)); }
+}
+async function firebaseSignOut(){
+  if(!fbAuth) return;
+  await fbAuth.signOut();
+  toast('已登出，此裝置改用本機儲存');
+}
+function updateAuthUI(){
+  const wrap = document.getElementById('authStatusWrap');
+  if(!wrap) return;
+  if(fbUser){
+    wrap.innerHTML = `<div style="font-size:12.5px;color:var(--green);margin-bottom:8px;">✓ 已登入：${fbUser.email}</div>
+      <button class="btn btn-secondary" id="signOutBtn" style="width:100%;">登出</button>`;
+    wrap.querySelector('#signOutBtn').onclick=firebaseSignOut;
+  } else {
+    wrap.innerHTML = `
+      <div class="field"><input type="email" id="authEmail" placeholder="Email" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;"></div>
+      <div class="field"><input type="password" id="authPassword" placeholder="密碼（至少6碼）" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;"></div>
+      <div class="timer-controls">
+        <button class="btn btn-secondary" id="signInBtn">登入</button>
+        <button class="btn btn-primary" id="signUpBtn">註冊新帳號</button>
+      </div>`;
+    wrap.querySelector('#signInBtn').onclick=()=>{
+      const e=wrap.querySelector('#authEmail').value.trim(), p=wrap.querySelector('#authPassword').value;
+      if(e&&p) firebaseSignIn(e,p); else toast('請輸入Email與密碼');
+    };
+    wrap.querySelector('#signUpBtn').onclick=()=>{
+      const e=wrap.querySelector('#authEmail').value.trim(), p=wrap.querySelector('#authPassword').value;
+      if(e&&p) firebaseSignUp(e,p); else toast('請輸入Email與密碼');
+    };
+  }
 }
 
 /* ================= TOAST ================= */
@@ -593,26 +751,87 @@ function getPdfBase(){
   return b.endsWith('/') ? b : b + '/';
 }
 function openSettingsModal(){
+  const cfg = getFirebaseConfig();
   const backdrop=document.createElement('div');
   backdrop.className='modal-backdrop';
-  backdrop.innerHTML = `<div class="modal">
-    <h3>PDF 資料來源設定</h3>
+  backdrop.innerHTML = `<div class="modal" style="max-height:88vh;overflow-y:auto;">
+    <h3>設定</h3>
+
+    <div style="font-size:12.5px;color:var(--sub);font-weight:700;margin-bottom:6px;">☁️ 雲端同步（跨裝置）</div>
     <div style="font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px;">
-      考卷檔名格式為「科目-年份.pdf」（例如 冷凍-90.pdf）。
-      預設會抓取與本頁面同層的 pdfs/ 資料夾。若你把 PDF 放在別的網址（例如 GitHub raw 連結），
-      在下面填入該資料夾的網址（結尾需含 /）。
+      設定一次 Firebase 專案資訊後，手機/電腦登入同一組帳號，進度、紅黃綠卡、筆記會自動即時同步。
     </div>
-    <div class="field">
-      <label>PDF 資料夾網址</label>
-      <input type="text" id="pdfBaseInput" placeholder="pdfs/" value="${(STATE.settings&&STATE.settings.pdfBase)||'pdfs/'}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--text);font-family:var(--mono);font-size:13px;">
+    <details style="margin-bottom:12px;">
+      <summary style="font-size:12px;color:var(--teal);cursor:pointer;">還沒設定 Firebase？點這裡看填哪6個欄位</summary>
+      <div style="font-size:11.5px;color:var(--sub-2);line-height:1.7;margin-top:8px;">
+        1. 到 console.firebase.google.com 建立專案<br>
+        2. 左側 Build → Authentication → Get Started → 啟用「Email/Password」<br>
+        3. 左側 Build → Firestore Database → 建立資料庫<br>
+        4. 齒輪 Project settings → 下方「Your apps」→ 點 &lt;/&gt; 新增網頁應用程式<br>
+        5. 複製出現的 firebaseConfig 六個值，貼到下面對應欄位
+      </div>
+    </details>
+    <div class="field"><input type="text" id="fbApiKey" placeholder="apiKey" value="${cfg?cfg.apiKey||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
+    <div class="field"><input type="text" id="fbAuthDomain" placeholder="authDomain" value="${cfg?cfg.authDomain||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
+    <div class="field"><input type="text" id="fbProjectId" placeholder="projectId" value="${cfg?cfg.projectId||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
+    <div class="field"><input type="text" id="fbStorageBucket" placeholder="storageBucket" value="${cfg?cfg.storageBucket||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
+    <div class="field"><input type="text" id="fbMessagingSenderId" placeholder="messagingSenderId" value="${cfg?cfg.messagingSenderId||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:6px;"></div>
+    <div class="field"><input type="text" id="fbAppId" placeholder="appId" value="${cfg?cfg.appId||'':''}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:10px;"></div>
+    <button class="btn btn-secondary" id="saveFbConfigBtn" style="width:100%;margin-bottom:14px;">儲存雲端設定</button>
+
+    <div id="authStatusWrap" style="margin-bottom:20px;"></div>
+
+    <div style="border-top:1px solid var(--line); padding-top:16px; margin-bottom:20px;">
+      <div style="font-size:12.5px;color:var(--sub);font-weight:700;margin-bottom:6px;">PDF 資料來源</div>
+      <div style="font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px;">
+        考卷檔名格式為「科目-年份.pdf」（例如 冷凍-90.pdf）。
+        預設會抓取與本頁面同層的 pdfs/ 資料夾。
+      </div>
+      <div class="field">
+        <input type="text" id="pdfBaseInput" placeholder="pdfs/" value="${(STATE.settings&&STATE.settings.pdfBase)||'pdfs/'}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--text);font-family:var(--mono);font-size:13px;">
+      </div>
+      <button class="btn btn-secondary" id="savePdfBtn" style="width:100%;">儲存 PDF 設定</button>
     </div>
-    <div class="timer-controls">
-      <button class="btn btn-secondary" id="cancelPdfBtn">取消</button>
-      <button class="btn btn-primary" id="savePdfBtn">儲存</button>
+
+    <div style="border-top:1px solid var(--line); padding-top:16px;">
+      <div style="font-size:12.5px;color:var(--sub);font-weight:700;margin-bottom:6px;">本機備份（未登入雲端同步時的替代方案）</div>
+      <div class="timer-controls" style="margin-bottom:10px;">
+        <button class="btn btn-secondary" id="exportBackupBtn">⬇️ 匯出備份</button>
+        <button class="btn btn-secondary" id="importBackupBtn">⬆️ 匯入備份</button>
+      </div>
+      <input type="file" id="importBackupFile" accept=".json" style="display:none;">
+    </div>
+
+    <div class="timer-controls" style="margin-top:18px;">
+      <button class="btn btn-secondary" id="closeSettingsBtn" style="width:100%;">關閉</button>
     </div>
   </div>`;
   document.body.appendChild(backdrop);
-  backdrop.querySelector('#cancelPdfBtn').onclick=()=>backdrop.remove();
+  backdrop.querySelector('#closeSettingsBtn').onclick=()=>backdrop.remove();
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) backdrop.remove(); });
+
+  backdrop.querySelector('#saveFbConfigBtn').onclick=()=>{
+    const newCfg = {
+      apiKey: backdrop.querySelector('#fbApiKey').value.trim(),
+      authDomain: backdrop.querySelector('#fbAuthDomain').value.trim(),
+      projectId: backdrop.querySelector('#fbProjectId').value.trim(),
+      storageBucket: backdrop.querySelector('#fbStorageBucket').value.trim(),
+      messagingSenderId: backdrop.querySelector('#fbMessagingSenderId').value.trim(),
+      appId: backdrop.querySelector('#fbAppId').value.trim(),
+    };
+    if(!newCfg.apiKey || !newCfg.projectId){ toast('請至少填入 apiKey 與 projectId'); return; }
+    if(!STATE.settings) STATE.settings={};
+    STATE.settings.firebase = newCfg;
+    saveState();
+    toast('雲端設定已儲存，正在連線...');
+    initFirebaseIfConfigured();
+    updateAuthUI();
+    setTimeout(()=>{
+      const el = document.getElementById('authStatusWrap');
+      if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 200);
+  };
+
   backdrop.querySelector('#savePdfBtn').onclick=()=>{
     let v=backdrop.querySelector('#pdfBaseInput').value.trim();
     if(!v) v='pdfs/';
@@ -620,8 +839,60 @@ function openSettingsModal(){
     STATE.settings.pdfBase=v;
     saveState();
     toast('已更新 PDF 來源設定');
-    backdrop.remove();
   };
+  backdrop.querySelector('#exportBackupBtn').onclick=()=>exportBackup();
+  backdrop.querySelector('#importBackupBtn').onclick=()=>backdrop.querySelector('#importBackupFile').click();
+  backdrop.querySelector('#importBackupFile').onchange=(e)=>{
+    const file = e.target.files[0];
+    if(file) importBackup(file);
+  };
+
+  updateAuthUI();
+  if(cfg && cfg.apiKey && !fbApp) initFirebaseIfConfigured();
+}
+
+/* ================= BACKUP / RESTORE ================= */
+async function exportBackup(){
+  toast('打包備份中，請稍候...');
+  const fileIds = Object.keys(STATE.fileMeta||{});
+  const files = {};
+  for(const fid of fileIds){
+    const dataUrl = await loadFile(fid);
+    if(dataUrl) files[fid] = dataUrl;
+  }
+  const backup = { version:1, exportedAt: new Date().toISOString(), state: STATE, files };
+  const blob = new Blob([JSON.stringify(backup)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `技師考衝刺站_備份_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  toast('備份已下載');
+}
+function importBackup(file){
+  showConfirm('匯入備份會覆蓋目前裝置上的所有進度與紀錄，確定要繼續嗎？', ()=>{
+    const reader = new FileReader();
+    reader.onload = async (e)=>{
+      try{
+        const backup = JSON.parse(e.target.result);
+        if(!backup.state){ toast('備份檔格式不正確'); return; }
+        for(const fid of Object.keys(backup.files||{})){
+          await storeFile(fid, backup.files[fid]);
+        }
+        STATE = deepMergeDefaults(backup.state);
+        saveState();
+        renderHome(); renderPlan(); renderLog();
+        if(document.getElementById('mistakeList')) renderMistakeBook();
+        renderTimerSubjectGrid(); renderTopicPicker(); renderYearPicker();
+        toast('已還原備份！');
+      }catch(err){
+        console.error(err);
+        toast('備份檔讀取失敗，請確認檔案是否正確');
+      }
+    };
+    reader.readAsText(file);
+  });
 }
 
 /* ================= TOPIC STATUS ================= */
@@ -785,11 +1056,32 @@ function pdfUrl(subject, year){ return getPdfBase() + encodeURIComponent(subject
 function openPdf(subject, year){
   if(!subject || !year){ toast('找不到對應年度'); return; }
   const url = pdfUrl(subject, year);
-  const a = document.createElement('a');
-  a.href = url; a.target = '_blank'; a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  showPdfModal(subject, year, url);
+}
+function showPdfModal(subject, year, url){
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.style.padding='8px';
+  backdrop.innerHTML = `<div class="modal" style="max-width:98vw; width:98vw; height:94vh; padding:12px; display:flex; flex-direction:column;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-shrink:0;">
+      <h3 style="margin:0; font-size:14px;">${subject} ${year} 年考卷</h3>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <a href="${url}" target="_blank" rel="noopener" style="font-size:12px; color:var(--teal);">在新分頁開啟 ↗</a>
+        <span id="closePdfModal" style="cursor:pointer; color:var(--sub-2); font-size:22px; line-height:1;">✕</span>
+      </div>
+    </div>
+    <div style="flex:1; min-height:0; border-radius:8px; overflow:hidden; background:#fff; position:relative;">
+      <iframe id="pdfFrame" src="${url}" style="width:100%; height:100%; border:none; display:block;"></iframe>
+    </div>
+    <div style="font-size:11px; color:var(--sub-2); margin-top:8px; text-align:center; flex-shrink:0;">
+      如果上方是空白，代表瀏覽器擋住了預覽，請點右上角「在新分頁開啟」，
+      或確認「${subject}-${year}.pdf」有跟網頁放在同一層的 pdfs 資料夾內。
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  const close=()=>backdrop.remove();
+  backdrop.querySelector('#closePdfModal').onclick=close;
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) close(); });
 }
 function refToYear(ref){ const m = (ref||'').match(/^(\d+)-/); return m ? m[1] : null; }
 function yearsChipsHtml(subject, yearsStr){
@@ -838,13 +1130,24 @@ function setRecordColor(subject, ref, color){
 
 /* ---- file storage (kept separate from main state to avoid bloating it) ---- */
 async function storeFile(id, dataUrl){
+  let ok = false;
+  try{ localStorage.setItem('exam-file-'+id, dataUrl); ok = true; }
+  catch(e){ console.warn('file store (local) failed', e); }
   if(HAS_CLAUDE_STORAGE){
-    try{ await window.storage.set('file:'+id, dataUrl); return true; }catch(e){ console.warn('file store (claude) failed', e); }
+    try{ await window.storage.set('file:'+id, dataUrl); ok = true; }catch(e){ console.warn('file store (claude) failed', e); }
   }
-  try{ localStorage.setItem('exam-file-'+id, dataUrl); return true; }
-  catch(e){ console.warn('file store (local) failed', e); toast('檔案儲存失敗，可能是空間不足，建議選較小的照片'); return false; }
+  if(fbUser && fbDb){
+    try{ await fbDb.collection('users').doc(fbUser.uid).collection('files').doc(id).set({dataUrl}); ok = true; }
+    catch(e){ console.warn('file store (cloud) failed', e); }
+  }
+  if(!ok) toast('檔案儲存失敗，可能是空間不足，建議選較小的照片');
+  return ok;
 }
 async function loadFile(id){
+  if(fbUser && fbDb){
+    try{ const doc = await fbDb.collection('users').doc(fbUser.uid).collection('files').doc(id).get(); if(doc.exists) return doc.data().dataUrl; }
+    catch(e){ console.warn('cloud file load failed', e); }
+  }
   if(HAS_CLAUDE_STORAGE){
     try{ const r = await window.storage.get('file:'+id); if(r && r.value) return r.value; }catch(e){}
   }
@@ -852,6 +1155,7 @@ async function loadFile(id){
 }
 async function deleteFile(id){
   if(HAS_CLAUDE_STORAGE){ try{ await window.storage.delete('file:'+id); }catch(e){} }
+  if(fbUser && fbDb){ try{ await fbDb.collection('users').doc(fbUser.uid).collection('files').doc(id).delete(); }catch(e){} }
   try{ localStorage.removeItem('exam-file-'+id); }catch(e){}
 }
 function readFileAsDataUrl(file){
@@ -1550,6 +1854,8 @@ async function init(){
   renderTimerSubjectGrid();
   setRound(1);
   renderHome();
+  setSyncDot('off');
+  initFirebaseIfConfigured();
   await syncNetworkTime();
   tickClock();
   setInterval(tickClock, 1000);
