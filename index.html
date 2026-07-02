@@ -1153,6 +1153,12 @@ async function loadFile(id){
   }
   try{ return localStorage.getItem('exam-file-'+id); }catch(e){ return null; }
 }
+async function loadFileWithTimeout(id, ms){
+  return Promise.race([
+    loadFile(id),
+    new Promise((resolve)=>setTimeout(()=>{ console.warn('loadFile timed out for', id); resolve(null); }, ms))
+  ]);
+}
 async function deleteFile(id){
   if(HAS_CLAUDE_STORAGE){ try{ await window.storage.delete('file:'+id); }catch(e){} }
   if(fbUser && fbDb){ try{ await fbDb.collection('users').doc(fbUser.uid).collection('files').doc(id).delete(); }catch(e){} }
@@ -1189,6 +1195,10 @@ function readAndCompressImage(file, maxWidth, quality){
 }
 
 /* ---- record editor modal ---- */
+function escapeHtml(str){
+  if(str==null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 function openRecordEditor(subject, ref, topicTitle){
   const k = recordKey(subject, ref);
   const rec = getRecord(subject, ref);
@@ -1208,7 +1218,7 @@ function openRecordEditor(subject, ref, topicTitle){
     </div>
     <div class="field">
       <label>筆記 / 補充內容</label>
-      <textarea id="recNote" rows="5" placeholder="打錯在哪、還不懂的觀念、下次要注意什麼..." style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);font-size:13px;font-family:inherit;">${rec.note||''}</textarea>
+      <textarea id="recNote" rows="5" placeholder="打錯在哪、還不懂的觀念、下次要注意什麼..." style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);font-size:13px;font-family:inherit;">${escapeHtml(rec.note)}</textarea>
     </div>
     <div class="field">
       <label>附加照片／PDF（例如手寫解題過程）</label>
@@ -1386,7 +1396,7 @@ function renderMistakeBook(){
         ${rec.color?`<span class="mi-badge ${rec.color}">${rec.color==='red'?'紅卡':rec.color==='yellow'?'黃卡':'綠卡'}</span>`:''}
         <span class="mi-title">${rec.subject} · <span style="color:var(--teal);font-family:var(--mono);">${rec.ref}</span> · ${rec.topicTitle||''}</span>
       </div>
-      ${rec.note?`<div class="mi-note">${rec.note.replace(/</g,'&lt;')}</div>`:''}
+      ${rec.note?`<div class="mi-note">${escapeHtml(rec.note)}</div>`:''}
       ${fileCount?`<div class="mi-files">📎 ${fileCount} 個附件</div>`:''}
     `;
     div.querySelector('.mi-check').onclick=()=>{
@@ -1407,7 +1417,16 @@ function selectAllMistakes(on){
 
 /* ---- Export mistake book ---- */
 async function exportMistakeBook(kind){
-  if(!mistakeSelected.size){ toast('請先勾選要匯出的題目'); return; }
+  try{
+    await exportMistakeBookInner(kind);
+  }catch(err){
+    console.error('exportMistakeBook failed', err);
+    toast('產生失敗：'+(err && err.message ? err.message : String(err)));
+  }
+}
+async function exportMistakeBookInner(kind){
+  console.log('exportMistakeBook called, kind=', kind, 'selected count=', mistakeSelected.size);
+  if(!mistakeSelected.size){ toast('請先在下方題目左邊勾選✓，才能匯出（目前沒有勾選任何題目）'); return; }
   // Open the window synchronously FIRST (before any awaits) so it's still
   // recognised as a direct result of the user's click and doesn't get popup-blocked.
   let w = null;
@@ -1424,7 +1443,7 @@ async function exportMistakeBook(kind){
     let imagesHtml = '';
     for(const fid of (rec.fileIds||[])){
       const meta = (STATE.fileMeta && STATE.fileMeta[fid]) || {name:'附件', type:''};
-      const dataUrl = await loadFile(fid);
+      const dataUrl = await loadFileWithTimeout(fid, 8000);
       if(dataUrl && meta.type && meta.type.startsWith('image/')){
         imagesHtml += `<img src="${dataUrl}" style="max-width:100%;margin:8px 0;border-radius:6px;border:1px solid #ddd;">`;
       } else if(dataUrl){
@@ -1440,7 +1459,7 @@ async function exportMistakeBook(kind){
           ${badgeText?`<span style="font-size:11px; padding:2px 10px; border-radius:12px; background:${badgeColor}22; color:${badgeColor}; font-weight:bold;">${badgeText}</span>`:''}
         </div>
         <div style="font-size:13px; color:#555; margin-bottom:8px;">${(rec.topicTitle||'').replace(/</g,'&lt;')}</div>
-        ${rec.note?`<div style="font-size:13px; color:#222; line-height:1.7; white-space:pre-line; background:#f7f7f9; padding:10px 12px; border-radius:8px;">${rec.note.replace(/</g,'&lt;')}</div>`:''}
+        ${rec.note?`<div style="font-size:13px; color:#222; line-height:1.7; white-space:pre-line; background:#f7f7f9; padding:10px 12px; border-radius:8px;">${escapeHtml(rec.note)}</div>`:''}
         ${imagesHtml}
       </div>`;
   }
