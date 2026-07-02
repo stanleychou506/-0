@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<title>技師考衝刺站</title>
+<style>
+:root{
+  --bg:#0b0f14;
+  --panel:#141b22;
+  --panel-2:#1b2430;
+  --line:#26313c;
+  --amber:#ffb020;
+  --amber-dim:#8a5c14;
+  --teal:#3ddcc7;
+  --teal-dim:#1f6e63;
+  --green:#5fd97a;
+  --red:#ff5f56;
+  --text:#eef3f7;
+  --sub:#8fa1af;
+  --sub-2:#5c6f7c;
+  --mono: 'IBM Plex Mono','SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+  --sans: -apple-system,BlinkMacSystemFont,'PingFang TC','Noto Sans TC',sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0; background:radial-gradient(1200px 800px at 50% -10%, #16202b 0%, var(--bg) 55%);
+  color:var(--text); font-family:var(--sans);
+  padding-bottom:calc(78px + env(safe-area-inset-bottom));
+  padding-top:env(safe-area-inset-top);
+  min-height:100%;
+  -webkit-font-smoothing:antialiased;
+}
+.app{max-width:520px; margin:0 auto; padding:18px 16px 8px;}
+.topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+.brand{display:flex; align-items:center; gap:8px;}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
+.brand h1{font-size:15px; letter-spacing:2px; font-weight:600; margin:0; color:var(--sub); text-transform:uppercase;}
+.clock{font-family:var(--mono); font-size:12px; color:var(--sub-2);}
+
+.card{background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid var(--line); border-radius:16px; padding:18px; margin-bottom:14px; position:relative; overflow:hidden;}
+.card::before{content:"";position:absolute; inset:0; background:linear-gradient(120deg, transparent 40%, rgba(255,176,32,.04) 50%, transparent 60%); pointer-events:none;}
+
+.hero{text-align:center; padding:26px 16px 22px;}
+.hero .label{font-size:11px; letter-spacing:3px; color:var(--sub); text-transform:uppercase; margin-bottom:10px;}
+.hero .days{font-family:var(--mono); font-size:64px; font-weight:700; line-height:1; color:var(--amber); text-shadow:0 0 30px rgba(255,176,32,.35); letter-spacing:-2px;}
+.hero .unit{font-size:14px; color:var(--sub); margin-top:2px; letter-spacing:1px;}
+.hero .sub-countdown{font-family:var(--mono); font-size:15px; color:var(--teal); margin-top:14px; letter-spacing:1px;}
+.hero .examdate{margin-top:14px; font-size:12px; color:var(--sub-2);}
+.hero .examdate button{background:none;border:none;color:var(--teal); font-size:12px; text-decoration:underline; padding:0; margin-left:6px;}
+
+.gaugerow{display:flex; gap:10px; margin-top:16px;}
+.gauge{flex:1; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center;}
+.gauge .n{font-family:var(--mono); font-size:20px; font-weight:700; color:var(--text);}
+.gauge .l{font-size:10px; color:var(--sub-2); margin-top:3px; letter-spacing:.5px;}
+
+h2.section-title{font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--sub); margin:22px 4px 10px; display:flex; align-items:center; gap:8px;}
+h2.section-title::before{content:""; width:14px; height:2px; background:var(--amber); display:inline-block;}
+
+.today-list .item{display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--line);}
+.today-list .item:last-child{border-bottom:none;}
+.today-list .tag{font-size:10px; font-family:var(--mono); background:var(--panel-2); border:1px solid var(--line); color:var(--teal); padding:2px 7px; border-radius:20px; flex-shrink:0;}
+.today-list .title{font-size:13px; flex:1; color:var(--text);}
+.today-list .go-btn{font-size:11px; font-weight:700; color:var(--amber); border:1px solid var(--amber-dim); padding:5px 10px; border-radius:20px; flex-shrink:0; cursor:pointer; white-space:nowrap;}
+.today-list .empty{color:var(--sub-2); font-size:13px; padding:12px 4px;}
+
+.subject-tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; margin-bottom:12px; scrollbar-width:none;}
+.subject-tabs::-webkit-scrollbar{display:none;}
+.subject-tab{flex-shrink:0; padding:9px 16px; border-radius:20px; border:1px solid var(--line); background:var(--panel); color:var(--sub); font-size:13px; font-weight:600; cursor:pointer;}
+.subject-tab.active{background:var(--amber); color:#1a1200; border-color:var(--amber);}
+
+.progressbar{height:6px; background:var(--bg); border-radius:4px; overflow:hidden; margin:8px 0 4px; border:1px solid var(--line);}
+.progressbar .fill{height:100%; background:linear-gradient(90deg,var(--teal-dim),var(--teal)); border-radius:4px; transition:width .3s;}
+.progress-label{font-size:11px; color:var(--sub-2); font-family:var(--mono); display:flex; justify-content:space-between;}
+
+.topic{border:1px solid var(--line); border-radius:12px; margin-bottom:8px; background:var(--panel); overflow:hidden;}
+.topic-head{display:flex; align-items:center; gap:10px; padding:12px 12px; cursor:pointer;}
+.topic-num{font-family:var(--mono); font-size:11px; color:var(--sub-2); width:20px; flex-shrink:0;}
+.topic-title{flex:1; font-size:13.5px; color:var(--text); line-height:1.4;}
+.status-dot{width:20px;height:20px; border-radius:50%; border:2px solid var(--sub-2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px;}
+.status-dot.today{border-color:var(--amber); background:rgba(255,176,32,.15); color:var(--amber);}
+.status-dot.done{border-color:var(--green); background:rgba(95,217,122,.18); color:var(--green);}
+.topic-body{max-height:0; overflow:hidden; transition:max-height .25s ease; padding:0 12px;}
+.topic-body.open{max-height:400px; padding:0 12px 14px;}
+.topic-body .desc{font-size:12.5px; color:var(--sub); line-height:1.6; margin-bottom:8px;}
+.topic-body .years{font-family:var(--mono); font-size:11.5px; color:var(--teal); background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:8px 10px; line-height:1.7; word-break:break-all;}
+.topic-body .actions{display:flex; gap:8px; margin-top:10px;}
+.mini-btn{flex:1; text-align:center; padding:8px 0; border-radius:8px; font-size:12px; border:1px solid var(--line); background:var(--panel-2); color:var(--sub); cursor:pointer; font-weight:600;}
+.mini-btn.on-today{border-color:var(--amber); color:var(--amber);}
+.mini-btn.on-done{border-color:var(--green); color:var(--green);}
+
+.timer-setup{display:flex; flex-direction:column; gap:14px;}
+.round-toggle{display:flex; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:4px;}
+.round-toggle button{flex:1; padding:10px 0; border:none; background:none; color:var(--sub); font-size:13px; font-weight:700; border-radius:9px; cursor:pointer;}
+.round-toggle button.active{background:var(--amber); color:#1a1200;}
+.select-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
+.select-grid button{padding:8px 0 7px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--sub); font-size:13px; font-weight:600; cursor:pointer; line-height:1.5;}
+.select-grid button.active{background:var(--teal); color:#052420; border-color:var(--teal);}
+.topic-pick{display:flex; align-items:center; gap:10px; padding:11px 10px; border:1px solid var(--line); border-radius:10px; margin-bottom:6px; cursor:pointer; background:var(--bg);}
+.topic-pick.selected{border-color:var(--amber); background:rgba(255,176,32,.08);}
+.topic-pick .radio{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--sub-2); flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+.topic-pick.selected .radio{border-color:var(--amber);}
+.topic-pick.selected .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--amber);}
+.topic-pick .tp-title{font-size:12.5px; color:var(--text); flex:1; line-height:1.4;}
+.topic-pick .tp-badge{font-size:9px; color:var(--sub-2); font-family:var(--mono);}
+.year-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
+.year-grid button{position:relative; padding:9px 0; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); color:var(--sub); font-size:12px; font-family:var(--mono); font-weight:700; cursor:pointer;}
+.year-grid button.active{background:var(--amber); color:#1a1200; border-color:var(--amber);}
+.year-grid button.done:not(.active){border-color:var(--green); color:var(--green);}
+.year-grid button.done:not(.active)::after{content:"✓"; position:absolute; top:-5px; right:-3px; font-size:8px; background:var(--green); color:#052a10; width:12px;height:12px;border-radius:50%; display:flex; align-items:center; justify-content:center;}
+.year-grid button.empty{opacity:.3; cursor:not-allowed;}
+.year-preview-row{font-size:11.5px; color:var(--sub); padding:5px 2px; border-bottom:1px solid var(--line); line-height:1.5;}
+.year-preview-row .ref{color:var(--teal); font-family:var(--mono); margin-right:6px;}
+.pdf-btn{display:inline-flex; align-items:center; gap:6px; padding:10px 18px; border-radius:20px; border:1px solid var(--teal-dim); background:rgba(61,220,199,.1); color:var(--teal); font-size:12.5px; font-weight:700; cursor:pointer;}
+.pdf-btn:active{background:rgba(61,220,199,.22);}
+.pdf-btn-wrap{text-align:center; margin-top:14px; min-height:20px;}
+.years-chips{display:flex; flex-wrap:wrap; gap:6px;}
+.year-chip{font-family:var(--mono); font-size:11px; color:var(--teal); background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:5px 10px; cursor:pointer;}
+.year-chip:active{background:rgba(61,220,199,.18);}
+.years-hint{font-size:10.5px; color:var(--sub-2); margin-bottom:6px;}
+.limit-note{font-size:12px; color:var(--sub-2); text-align:center; font-family:var(--mono);}
+
+.timer-display{text-align:center; padding:30px 0 10px;}
+.timer-display .q-label{font-size:12px; letter-spacing:2px; color:var(--sub); text-transform:uppercase; margin-bottom:6px;}
+.timer-display .clock-big{font-family:var(--mono); font-size:58px; font-weight:700; letter-spacing:1px; color:var(--text); transition:color .2s;}
+.timer-display .clock-big.warn{color:var(--amber);}
+.timer-display .clock-big.danger{color:var(--red); animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.ring-wrap{position:relative; width:220px; height:220px; margin:0 auto;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-bg{fill:none; stroke:var(--line); stroke-width:8;}
+.ring-fg{fill:none; stroke:var(--amber); stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset .3s linear, stroke .3s;}
+.ring-center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column;}
+
+.timer-controls{display:flex; gap:10px; margin-top:20px;}
+.btn{flex:1; padding:14px 0; border-radius:12px; border:none; font-size:14px; font-weight:700; cursor:pointer;}
+.btn-primary{background:var(--amber); color:#1a1200;}
+.btn-secondary{background:var(--panel-2); color:var(--text); border:1px solid var(--line);}
+.btn-ghost{background:none; color:var(--sub-2); border:1px solid var(--line);}
+.btn-danger{background:rgba(255,95,86,.15); color:var(--red); border:1px solid rgba(255,95,86,.4);}
+
+.qcounter{display:flex; align-items:center; justify-content:center; gap:14px; margin-top:16px;}
+.qcounter .n{font-family:var(--mono); font-size:22px; color:var(--teal); font-weight:700;}
+.qcounter .l{font-size:12px; color:var(--sub-2);}
+
+.checklist-mini{margin-top:18px;}
+.checklist-mini .ci{display:flex; gap:6px; align-items:center; padding:9px 4px; border-bottom:1px solid var(--line); font-size:12px;}
+.checklist-mini .ci:last-child{border-bottom:none;}
+.checklist-mini .box{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--sub-2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px;}
+.checklist-mini .box.checked{background:var(--teal); border-color:var(--teal); color:#052420;}
+.checklist-mini .ci-text{flex:1; line-height:1.35; min-width:0;}
+.checklist-mini .ref-mono{color:var(--teal); font-family:var(--mono); margin-right:5px; font-size:11px;}
+.checklist-mini .ci-cards{display:flex; gap:3px; flex-shrink:0;}
+.mini-card{width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer; opacity:.35; border:1.5px solid transparent;}
+.mini-card.active{opacity:1; border-color:currentColor;}
+.mini-card.mini-red{color:var(--red);} .mini-card.mini-yellow{color:var(--amber);} .mini-card.mini-green{color:var(--green);}
+.mini-note-btn{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--sub-2);}
+.mini-note-btn.has-note{color:var(--teal);}
+
+.record-quickbar{display:none; align-items:center; justify-content:center; gap:8px; margin-top:14px;}
+.qc-btn{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;background:var(--panel-2);border:2px solid var(--line); opacity:.5;}
+.qc-btn.active{opacity:1; box-shadow:0 0 0 2px currentColor;}
+.qc-btn.qc-red{color:var(--red);} .qc-btn.qc-yellow{color:var(--amber);} .qc-btn.qc-green{color:var(--green);}
+.qc-note-btn{padding:0 16px; height:38px; border-radius:20px; background:var(--panel-2); border:1px solid var(--line); color:var(--sub); font-size:12.5px; display:flex; align-items:center; gap:5px; cursor:pointer;}
+.qc-note-btn.has-note{color:var(--teal); border-color:var(--teal-dim);}
+
+.card-btn{flex:1; padding:11px 0; border-radius:10px; border:1.5px solid var(--line); background:var(--panel-2); color:var(--sub); font-size:12.5px; font-weight:600; cursor:pointer; opacity:.6;}
+.card-btn.active{opacity:1; border-color:currentColor;}
+.card-red.active{color:var(--red); background:rgba(255,95,86,.1);}
+.card-yellow.active{color:var(--amber); background:rgba(255,176,32,.1);}
+.card-green.active{color:var(--green); background:rgba(95,217,122,.1);}
+.seg-toggle{display:flex; gap:8px;}
+.seg-btn{flex:1; padding:9px 0; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); color:var(--sub); font-size:11.5px; cursor:pointer;}
+.seg-btn.active{background:var(--teal); color:#052420; border-color:var(--teal);}
+
+.mistake-item{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px;}
+.mistake-item .mi-top{display:flex; align-items:flex-start; gap:10px;}
+.mistake-item .mi-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--sub-2); flex-shrink:0; margin-top:2px; display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;}
+.mistake-item .mi-check.checked{background:var(--amber); border-color:var(--amber); color:#1a1200;}
+.mistake-item .mi-badge{font-size:9px; padding:2px 7px; border-radius:20px; flex-shrink:0; font-weight:700;}
+.mistake-item .mi-badge.red{background:rgba(255,95,86,.18); color:var(--red);}
+.mistake-item .mi-badge.yellow{background:rgba(255,176,32,.18); color:var(--amber);}
+.mistake-item .mi-badge.green{background:rgba(95,217,122,.18); color:var(--green);}
+.mistake-item .mi-title{font-size:12.5px; color:var(--text); flex:1; line-height:1.4;}
+.mistake-item .mi-note{font-size:11.5px; color:var(--sub); margin-top:6px; padding-left:28px; line-height:1.5; white-space:pre-line;}
+.mistake-item .mi-files{font-size:10.5px; color:var(--sub-2); margin-top:4px; padding-left:28px;}
+.filter-chip{display:inline-flex; align-items:center; gap:5px; padding:7px 12px; border-radius:20px; border:1px solid var(--line); background:var(--panel-2); color:var(--sub); font-size:12px; cursor:pointer; margin-right:6px; margin-bottom:6px;}
+.filter-chip.active{border-color:currentColor;}
+.filter-chip.fc-red.active{color:var(--red); background:rgba(255,95,86,.1);}
+.filter-chip.fc-yellow.active{color:var(--amber); background:rgba(255,176,32,.1);}
+.filter-chip.fc-green.active{color:var(--green); background:rgba(95,217,122,.1);}
+
+.stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.stat-box{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:14px;}
+.stat-box .n{font-family:var(--mono); font-size:24px; font-weight:700; color:var(--amber);}
+.stat-box .l{font-size:11px; color:var(--sub-2); margin-top:4px;}
+
+.loglist{display:flex; flex-direction:column; gap:8px;}
+.logitem{display:flex; align-items:center; gap:10px; padding:10px; background:var(--bg); border:1px solid var(--line); border-radius:10px; font-size:12.5px;}
+.logitem .d{font-family:var(--mono); color:var(--sub-2); font-size:11px; width:64px; flex-shrink:0;}
+.logitem .badge{font-size:10px; padding:2px 7px; border-radius:20px; background:var(--panel-2); color:var(--teal); flex-shrink:0;}
+.logitem .txt{flex:1; color:var(--sub);}
+.logitem .m{font-family:var(--mono); color:var(--text); font-weight:600;}
+.logitem .del{flex-shrink:0; width:24px; height:24px; border-radius:50%; border:1px solid var(--line); background:var(--panel-2); color:var(--sub-2); display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; line-height:1;}
+.logitem .del:active{background:rgba(255,95,86,.2); color:var(--red); border-color:var(--red);}
+
+.subject-bars{display:flex; flex-direction:column; gap:12px;}
+.sbar-row .top{display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px;}
+.sbar-row .top .name{color:var(--text); font-weight:600;}
+.sbar-row .top .frac{font-family:var(--mono); color:var(--sub-2);}
+
+.tabbar{position:fixed; left:0; right:0; bottom:0; background:rgba(11,15,20,.92); backdrop-filter:blur(14px); border-top:1px solid var(--line); display:flex; padding:8px 6px calc(8px + env(safe-area-inset-bottom));  z-index:50;}
+.tabbar button{flex:1; background:none; border:none; color:var(--sub-2); display:flex; flex-direction:column; align-items:center; gap:2px; font-size:9px; padding:6px 0; cursor:pointer; letter-spacing:.3px;}
+.tabbar button svg{width:18px;height:18px;}
+.tabbar button.active{color:var(--amber);}
+.tabbar button.active svg{filter:drop-shadow(0 0 6px rgba(255,176,32,.5));}
+
+.view{display:none;}
+.view.active{display:block; animation:fadein .25s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; color:var(--sub); margin-bottom:6px;}
+.field input[type=date]{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:11px 12px; color:var(--text); font-family:var(--mono); font-size:14px;}
+.modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px;}
+.modal{background:var(--panel-2); border:1px solid var(--line); border-radius:16px; padding:20px; width:100%; max-width:360px;}
+.modal h3{margin:0 0 14px; font-size:15px;}
+.empty-state{text-align:center; padding:40px 20px; color:var(--sub-2); font-size:13px;}
+.toast{position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:var(--panel-2); border:1px solid var(--amber); color:var(--text); padding:10px 18px; border-radius:30px; font-size:12.5px; z-index:200; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span><h1>技師考衝刺站</h1></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="clock" id="clockNow">--:--:--</div>
+      <button onclick="openSettingsModal()" style="background:none;border:none;color:var(--sub-2);padding:2px;cursor:pointer;display:flex;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- HOME / COUNTDOWN -->
+  <div class="view active" id="view-home">
+    <div class="card hero">
+      <div class="label">距離考試剩餘</div>
+      <div class="days" id="daysLeft">--</div>
+      <div class="unit">天</div>
+      <div class="sub-countdown" id="hmsLeft">--:--:--:--</div>
+      <div class="examdate" id="examDateLine">尚未設定考試日期 <button onclick="openDateModal()">設定</button></div>
+      <div class="gaugerow">
+        <div class="gauge"><div class="n" id="gaugeDone">0/67</div><div class="l">考點完成</div></div>
+        <div class="gauge"><div class="n" id="gaugeHours">0h</div><div class="l">累積讀書</div></div>
+        <div class="gauge"><div class="n" id="gaugeStreak">0</div><div class="l">連續天數</div></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">今日待讀</h2>
+    <div class="card today-list" id="todayList"></div>
+
+    <h2 class="section-title">各科進度（考點）</h2>
+    <div class="card subject-bars" id="homeSubjectBars"></div>
+
+    <h2 class="section-title">各科進度（歷屆整卷複習）</h2>
+    <div class="card subject-bars" id="homePaperBars"></div>
+  </div>
+
+  <!-- STUDY PLAN -->
+  <div class="view" id="view-plan">
+    <h2 class="section-title" style="margin-top:4px">讀書計畫 · 依考點分類</h2>
+    <div class="subject-tabs" id="planTabs"></div>
+    <div class="progressbar"><div class="fill" id="planProgressFill"></div></div>
+    <div class="progress-label"><span id="planProgressLabel">0 / 0 已完成</span><span id="planProgressPct">0%</span></div>
+    <div id="planTopicList" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- TIMER -->
+  <div class="view" id="view-timer">
+    <h2 class="section-title" style="margin-top:4px">刷題計時器</h2>
+    <div class="card">
+      <div class="timer-setup" id="timerSetup">
+        <div class="round-toggle">
+          <button id="roundBtn1" onclick="setRound(1)" class="active">第一輪 · 逐題限時</button>
+          <button id="roundBtn2" onclick="setRound(2)">第二輪 · 整科複習</button>
+        </div>
+        <div>
+          <div class="select-grid" id="timerSubjectGrid"></div>
+        </div>
+        <div id="topicPickerWrap" style="display:none;">
+          <div class="limit-note" id="topicPickerHint" style="text-align:left; margin-bottom:6px;">選擇要刷的考點</div>
+          <div id="topicPickerList" style="max-height:260px; overflow-y:auto;"></div>
+        </div>
+        <div id="yearPickerWrap" style="display:none;">
+          <div class="limit-note" id="yearPickerHint" style="text-align:left; margin-bottom:6px;">選擇要複習的年度考卷</div>
+          <div class="year-grid" id="yearGrid"></div>
+          <div id="yearPreview" style="margin-top:8px; max-height:200px; overflow-y:auto;"></div>
+          <div class="pdf-btn-wrap" id="yearPdfBtnWrap"></div>
+        </div>
+        <div class="limit-note" id="limitNote">電工學每題 40 分鐘・其餘每題 30 分鐘</div>
+        <button class="btn btn-primary" onclick="startSession()" id="startSessionBtn" disabled>開始計時</button>
+      </div>
+
+      <div id="timerRunning" style="display:none">
+        <div class="timer-display">
+          <div class="q-label" id="runningLabel">電工學 · 第一輪</div>
+          <div class="ring-wrap">
+            <svg width="220" height="220" viewBox="0 0 220 220">
+              <circle class="ring-bg" cx="110" cy="110" r="100"></circle>
+              <circle class="ring-fg" id="ringFg" cx="110" cy="110" r="100" stroke-dasharray="628.3" stroke-dashoffset="0"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="clock-big" id="clockBig">40:00</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qcounter" id="qcounterWrap">
+          <div><div class="n" id="qNum" style="font-size:20px;">1</div><div class="l" id="qLabel">目前第幾題</div></div>
+        </div>
+
+        <div class="pdf-btn-wrap" id="pdfBtnWrap"></div>
+
+        <div class="record-quickbar" id="recordQuickbar">
+          <span class="qc-btn qc-red" data-color="red" onclick="quickSetColor('red')">🔴</span>
+          <span class="qc-btn qc-yellow" data-color="yellow" onclick="quickSetColor('yellow')">🟡</span>
+          <span class="qc-btn qc-green" data-color="green" onclick="quickSetColor('green')">🟢</span>
+          <span class="qc-note-btn" id="qcNoteBtn" onclick="openCurrentRecordEditor()">📝 筆記/補充</span>
+        </div>
+
+        <div class="timer-controls">
+          <button class="btn btn-secondary" id="pauseBtn" onclick="togglePause()">暫停</button>
+          <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">下一題</button>
+        </div>
+
+        <div class="checklist-mini" id="round1TopicNote" style="display:none">
+          <div class="ci"><span class="box" id="round1DoneBox" onclick="toggleRound1Done()">✓</span><span>結束時將這個考點標記為「已完成」</span></div>
+        </div>
+
+        <div class="timer-controls">
+          <button class="btn btn-danger" onclick="endSession()">結束本次並記錄</button>
+        </div>
+
+        <div class="checklist-mini" id="round2Checklist" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG / STATS -->
+  <div class="view" id="view-log">
+    <h2 class="section-title" style="margin-top:4px">讀書記錄</h2>
+    <div class="card">
+      <div class="stat-grid">
+        <div class="stat-box"><div class="n" id="statTotalHours">0h</div><div class="l">總讀書時數</div></div>
+        <div class="stat-box"><div class="n" id="statSessions">0</div><div class="l">計時場次</div></div>
+        <div class="stat-box"><div class="n" id="statTopicsDone">0/67</div><div class="l">考點完成</div></div>
+        <div class="stat-box"><div class="n" id="statStreak">0 天</div><div class="l">連續讀書</div></div>
+        <div class="stat-box"><div class="n" id="statPapersDone">0/125</div><div class="l">歷屆整卷複習</div></div>
+        <div class="stat-box"><div class="n" id="statAvgMin">0m</div><div class="l">平均每場時長</div></div>
+      </div>
+    </div>
+    <h2 class="section-title">近期紀錄</h2>
+    <div class="card">
+      <div class="loglist" id="logList"></div>
+    </div>
+    <div style="text-align:center; padding:10px 0 30px;">
+      <button class="btn-ghost" style="padding:10px 18px; border-radius:10px; font-size:12px;" onclick="resetAllConfirm()">清除全部資料</button>
+    </div>
+  </div>
+
+  <!-- MISTAKE BOOK -->
+  <div class="view" id="view-mistakes">
+    <h2 class="section-title" style="margin-top:4px">錯題本</h2>
+    <div class="card">
+      <div style="margin-bottom:10px;">
+        <span class="filter-chip fc-red active" data-f="red" onclick="toggleMistakeFilter('red',this)">🔴 紅卡</span>
+        <span class="filter-chip fc-yellow active" data-f="yellow" onclick="toggleMistakeFilter('yellow',this)">🟡 黃卡</span>
+        <span class="filter-chip fc-green" data-f="green" onclick="toggleMistakeFilter('green',this)">🟢 綠卡</span>
+        <span class="filter-chip" data-f="note" onclick="toggleMistakeFilter('note',this)">📝 有筆記</span>
+      </div>
+      <div class="subject-tabs" id="mistakeSubjectTabs" style="margin-bottom:4px;"></div>
+      <div style="display:flex; gap:8px; margin:10px 0;">
+        <div class="mini-btn" onclick="selectAllMistakes(true)">全選</div>
+        <div class="mini-btn" onclick="selectAllMistakes(false)">取消全選</div>
+      </div>
+      <div id="mistakeList"></div>
+      <div class="empty-state" id="mistakeEmpty" style="display:none;">還沒有標記任何紅卡/黃卡/綠卡題目。在「計時」頁籤刷題時，可以標記題目狀態並加上筆記，這裡就會自動整理成錯題本。</div>
+    </div>
+
+    <div class="card" id="mistakeExportBar" style="position:sticky; bottom:calc(78px + env(safe-area-inset-bottom) + 10px);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:12.5px; color:var(--sub);">已選取 <span id="mistakeSelCount" style="color:var(--amber); font-family:var(--mono); font-weight:700;">0</span> 題</span>
+      </div>
+      <div class="timer-controls">
+        <button class="btn btn-secondary" onclick="exportMistakeBook('word')">📄 下載 Word</button>
+        <button class="btn btn-primary" onclick="exportMistakeBook('pdf')">🖨️ 產生 PDF（列印）</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tabbar">
+  <button class="active" data-view="home" onclick="switchView('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+    倒數
+  </button>
+  <button data-view="plan" onclick="switchView('plan')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg>
+    計畫
+  </button>
+  <button data-view="timer" onclick="switchView('timer')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>
+    計時
+  </button>
+  <button data-view="log" onclick="switchView('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 3 4 5-8"/></svg>
+    記錄
+  </button>
+  <button data-view="mistakes" onclick="switchView('mistakes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2h6l1 4H8l1-4z"/><path d="M5 6h14l-1.5 14a2 2 0 01-2 2h-7a2 2 0 01-2-2L5 6z"/><path d="M10 11v6M14 11v6"/></svg>
+    錯題本
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DATA ================= */
+const YEAR_INDEX = {"冷凍": {"90": [{"ref": "90-2", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "90-3", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "90-1", "topicId": 4, "topicTitle": "冷媒基礎命名、熱力性質與混合冷媒特性"}, {"ref": "90-4", "topicId": 16, "topicTitle": "蒸發盤管結霜危害、除霜工程與除霜安全控制"}], "93": [{"ref": "93-1", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "93-3", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "93-2", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}], "97": [{"ref": "97-2", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "97-1", "topicId": 4, "topicTitle": "冷媒基礎命名、熱力性質與混合冷媒特性"}, {"ref": "97-3", "topicId": 15, "topicTitle": "系統控制元件、節流裝置與電路管路實務控制"}], "98": [{"ref": "98-3", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "98-1", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "98-4", "topicId": 17, "topicTitle": "特殊相變與雙相變應用系統工程"}], "99": [{"ref": "99-2", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "99-1", "topicId": 7, "topicTitle": "容積式壓縮機（往復/螺旋）熱力運轉特性"}, {"ref": "99-3", "topicId": 7, "topicTitle": "容積式壓縮機（往復/螺旋）熱力運轉特性"}, {"ref": "99-4", "topicId": 9, "topicTitle": "庫體穩態熱傳與總體結構顯熱負荷計算"}], "100": [{"ref": "100-2", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "100-3", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "100-1", "topicId": 4, "topicTitle": "冷媒基礎命名、熱力性質與混合冷媒特性"}, {"ref": "100-4", "topicId": 10, "topicTitle": "實際工程特定製程綜合冷凍負荷計算"}], "102": [{"ref": "102-1", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "102-4", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "102-2", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "102-3", "topicId": 9, "topicTitle": "庫體穩態熱傳與總體結構顯熱負荷計算"}], "104": [{"ref": "104-1", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "104-3", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "104-2", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "104-4", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "104-2", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "104-4", "topicId": 14, "topicTitle": "食品凍結理論、凍結機制與熱力學性質"}], "106": [{"ref": "106-1", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "106-2", "topicId": 7, "topicTitle": "容積式壓縮機（往復/螺旋）熱力運轉特性"}, {"ref": "106-3", "topicId": 9, "topicTitle": "庫體穩態熱傳與總體結構顯熱負荷計算"}], "112": [{"ref": "112-4", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "112-3", "topicId": 3, "topicTitle": "二元複疊（Cascade）與超臨界特殊循環計算"}, {"ref": "112-2", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "112-1", "topicId": 17, "topicTitle": "特殊相變與雙相變應用系統工程"}], "113": [{"ref": "113-2", "topicId": 1, "topicTitle": "卡諾、逆Rankine理想與真實單段循環計算"}, {"ref": "113-3", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "113-4", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "113-1", "topicId": 14, "topicTitle": "食品凍結理論、凍結機制與熱力學性質"}], "94": [{"ref": "94-4", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "94-3", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "94-2", "topicId": 9, "topicTitle": "庫體穩態熱傳與總體結構顯熱負荷計算"}, {"ref": "94-1", "topicId": 16, "topicTitle": "蒸發盤管結霜危害、除霜工程與除霜安全控制"}], "105": [{"ref": "105-2", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "105-1", "topicId": 3, "topicTitle": "二元複疊（Cascade）與超臨界特殊循環計算"}, {"ref": "105-4", "topicId": 7, "topicTitle": "容積式壓縮機（往復/螺旋）熱力運轉特性"}, {"ref": "105-3", "topicId": 8, "topicTitle": "速度式壓縮機（離心/磁浮）原理與喘振控制"}], "107": [{"ref": "107-4", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "107-2", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "107-1", "topicId": 8, "topicTitle": "速度式壓縮機（離心/磁浮）原理與喘振控制"}, {"ref": "107-3", "topicId": 9, "topicTitle": "庫體穩態熱傳與總體結構顯熱負荷計算"}, {"ref": "107-3", "topicId": 10, "topicTitle": "實際工程特定製程綜合冷凍負荷計算"}], "108": [{"ref": "108-2", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "108-4", "topicId": 3, "topicTitle": "二元複疊（Cascade）與超臨界特殊循環計算"}, {"ref": "108-1", "topicId": 7, "topicTitle": "容積式壓縮機（往復/螺旋）熱力運轉特性"}, {"ref": "108-3", "topicId": 17, "topicTitle": "特殊相變與雙相變應用系統工程"}], "110": [{"ref": "110-3", "topicId": 2, "topicTitle": "進階多級壓縮與閃氣槽系統熱力計算"}, {"ref": "110-2", "topicId": 3, "topicTitle": "二元複疊（Cascade）與超臨界特殊循環計算"}, {"ref": "110-1", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "110-4", "topicId": 17, "topicTitle": "特殊相變與雙相變應用系統工程"}], "101": [{"ref": "101-2", "topicId": 3, "topicTitle": "二元複疊（Cascade）與超臨界特殊循環計算"}, {"ref": "101-1", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "101-4", "topicId": 8, "topicTitle": "速度式壓縮機（離心/磁浮）原理與喘振控制"}, {"ref": "101-3", "topicId": 12, "topicTitle": "單相與兩相流體流動阻力與管路工程"}], "111": [{"ref": "111-4", "topicId": 3, "topicTitle": "二元複疊（Cascade）與超臨界特殊循環計算"}, {"ref": "111-1", "topicId": 4, "topicTitle": "冷媒基礎命名、熱力性質與混合冷媒特性"}, {"ref": "111-3", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "111-2", "topicId": 15, "topicTitle": "系統控制元件、節流裝置與電路管路實務控制"}], "92": [{"ref": "92-2", "topicId": 4, "topicTitle": "冷媒基礎命名、熱力性質與混合冷媒特性"}, {"ref": "92-4", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "92-1", "topicId": 10, "topicTitle": "實際工程特定製程綜合冷凍負荷計算"}, {"ref": "92-3", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "92-1", "topicId": 13, "topicTitle": "食品暫態熱傳（Heisler圖）與冷卻製程計算"}], "109": [{"ref": "109-2", "topicId": 4, "topicTitle": "冷媒基礎命名、熱力性質與混合冷媒特性"}, {"ref": "109-4", "topicId": 8, "topicTitle": "速度式壓縮機（離心/磁浮）原理與喘振控制"}, {"ref": "109-3", "topicId": 14, "topicTitle": "食品凍結理論、凍結機制與熱力學性質"}, {"ref": "109-1", "topicId": 16, "topicTitle": "蒸發盤管結霜危害、除霜工程與除霜安全控制"}], "95": [{"ref": "95-2", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "95-1", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "95-3", "topicId": 10, "topicTitle": "實際工程特定製程綜合冷凍負荷計算"}, {"ref": "95-4", "topicId": 15, "topicTitle": "系統控制元件、節流裝置與電路管路實務控制"}], "103": [{"ref": "103-1", "topicId": 5, "topicTitle": "環保法規、新一代低GWP與可燃性冷媒應用"}, {"ref": "103-2", "topicId": 14, "topicTitle": "食品凍結理論、凍結機制與熱力學性質"}, {"ref": "103-3", "topicId": 15, "topicTitle": "系統控制元件、節流裝置與電路管路實務控制"}], "96": [{"ref": "96-3", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "96-4", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "96-2", "topicId": 13, "topicTitle": "食品暫態熱傳（Heisler圖）與冷卻製程計算"}, {"ref": "96-1", "topicId": 17, "topicTitle": "特殊相變與雙相變應用系統工程"}], "114": [{"ref": "114-1", "topicId": 6, "topicTitle": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統"}, {"ref": "114-3", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "114-4", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "114-2", "topicId": 12, "topicTitle": "單相與兩相流體流動阻力與管路工程"}], "91": [{"ref": "91-3", "topicId": 8, "topicTitle": "速度式壓縮機（離心/磁浮）原理與喘振控制"}, {"ref": "91-1", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "91-2", "topicId": 11, "topicTitle": "熱交換器設計、LMTD（對數平均溫差）與熱傳率"}, {"ref": "91-4", "topicId": 12, "topicTitle": "單相與兩相流體流動阻力與管路工程"}]}, "空調": {"90": [{"ref": "90-4", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "90-1", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "90-2", "topicId": 7, "topicTitle": "熱交換器設計（ε-NTU法、鰭片熱傳、Wilson plot）"}, {"ref": "90-3", "topicId": 12, "topicTitle": "潔淨室（Cleanroom）空調系統設計"}], "93": [{"ref": "93-4", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "93-3", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "93-2", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "93-6", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "93-5", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "93-1", "topicId": 13, "topicTitle": "空調系統類型與末端裝置設計"}], "99": [{"ref": "99-2", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "99-5", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "99-4", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}, {"ref": "99-1", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "99-5", "topicId": 12, "topicTitle": "潔淨室（Cleanroom）空調系統設計"}, {"ref": "99-1", "topicId": 13, "topicTitle": "空調系統類型與末端裝置設計"}, {"ref": "99-2", "topicId": 16, "topicTitle": "冰水主機/熱泵系統節能運轉與負載經濟分析"}, {"ref": "99-3", "topicId": 16, "topicTitle": "冰水主機/熱泵系統節能運轉與負載經濟分析"}], "101": [{"ref": "101-1", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "101-4", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "101-2", "topicId": 8, "topicTitle": "吸收式與熱驅動冷凍循環"}, {"ref": "101-3", "topicId": 16, "topicTitle": "冰水主機/熱泵系統節能運轉與負載經濟分析"}], "102": [{"ref": "102-1", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "102-2", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "102-3", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "102-4", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "102-5", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}], "106": [{"ref": "106-2", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "106-4", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "106-3", "topicId": 8, "topicTitle": "吸收式與熱驅動冷凍循環"}, {"ref": "106-1", "topicId": 11, "topicTitle": "全熱交換器/熱回收裝置節能分析"}, {"ref": "106-1", "topicId": 12, "topicTitle": "潔淨室（Cleanroom）空調系統設計"}], "107": [{"ref": "107-1", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "107-4", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "107-2", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}], "113": [{"ref": "113-1", "topicId": 1, "topicTitle": "冷卻水塔（Cooling Tower）熱質傳計算與設計"}, {"ref": "113-4", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "113-2", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}, {"ref": "113-3", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "113-1", "topicId": 15, "topicTitle": "資料中心與特殊環境空調設計"}], "103": [{"ref": "103-3", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "103-1", "topicId": 12, "topicTitle": "潔淨室（Cleanroom）空調系統設計"}], "105": [{"ref": "105-1", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "105-5", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}, {"ref": "105-2", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "105-3", "topicId": 13, "topicTitle": "空調系統類型與末端裝置設計"}], "108": [{"ref": "108-1", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "108-3", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "108-2", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "108-4", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}], "109": [{"ref": "109-1", "topicId": 2, "topicTitle": "濕空氣性質、絕熱飽和過程與露點計算"}, {"ref": "109-2", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "109-4", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "109-3", "topicId": 9, "topicTitle": "室內空氣品質與通風換氣控制"}], "91": [{"ref": "91-2", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "91-3", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "91-4", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "91-1", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}], "92": [{"ref": "92-3", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "92-2", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "92-1", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "92-4", "topicId": 7, "topicTitle": "熱交換器設計（ε-NTU法、鰭片熱傳、Wilson plot）"}], "94": [{"ref": "94-2", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "94-3", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "94-4", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "94-1", "topicId": 7, "topicTitle": "熱交換器設計（ε-NTU法、鰭片熱傳、Wilson plot）"}, {"ref": "94-5", "topicId": 7, "topicTitle": "熱交換器設計（ε-NTU法、鰭片熱傳、Wilson plot）"}], "96": [{"ref": "96-2", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "96-4", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "96-5", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "96-3", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}, {"ref": "96-1", "topicId": 11, "topicTitle": "全熱交換器/熱回收裝置節能分析"}], "97": [{"ref": "97-5", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "97-4", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "97-1", "topicId": 9, "topicTitle": "室內空氣品質與通風換氣控制"}, {"ref": "97-2", "topicId": 10, "topicTitle": "熱舒適與人體熱平衡分析"}, {"ref": "97-3", "topicId": 14, "topicTitle": "空調機加濕程序計算"}], "98": [{"ref": "98-1", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}], "100": [{"ref": "100-2", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "100-3", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "100-4", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "100-1", "topicId": 11, "topicTitle": "全熱交換器/熱回收裝置節能分析"}], "110": [{"ref": "110-5", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "110-1", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}, {"ref": "110-4", "topicId": 9, "topicTitle": "室內空氣品質與通風換氣控制"}, {"ref": "110-2", "topicId": 11, "topicTitle": "全熱交換器/熱回收裝置節能分析"}, {"ref": "110-3", "topicId": 14, "topicTitle": "空調機加濕程序計算"}], "111": [{"ref": "111-2", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "111-2", "topicId": 7, "topicTitle": "熱交換器設計（ε-NTU法、鰭片熱傳、Wilson plot）"}, {"ref": "111-1", "topicId": 10, "topicTitle": "熱舒適與人體熱平衡分析"}], "112": [{"ref": "112-5", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "112-4", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "112-2", "topicId": 8, "topicTitle": "吸收式與熱驅動冷凍循環"}, {"ref": "112-1", "topicId": 16, "topicTitle": "冰水主機/熱泵系統節能運轉與負載經濟分析"}, {"ref": "112-2", "topicId": 16, "topicTitle": "冰水主機/熱泵系統節能運轉與負載經濟分析"}], "114": [{"ref": "114-3", "topicId": 3, "topicTitle": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析"}, {"ref": "114-4", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "114-2", "topicId": 9, "topicTitle": "室內空氣品質與通風換氣控制"}, {"ref": "114-4", "topicId": 15, "topicTitle": "資料中心與特殊環境空調設計"}], "95": [{"ref": "95-1", "topicId": 4, "topicTitle": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）"}, {"ref": "95-4", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "95-5", "topicId": 6, "topicTitle": "管路摩擦損失、風管設計與泵浦性能"}, {"ref": "95-2", "topicId": 8, "topicTitle": "吸收式與熱驅動冷凍循環"}, {"ref": "95-3", "topicId": 12, "topicTitle": "潔淨室（Cleanroom）空調系統設計"}], "104": [{"ref": "104-4", "topicId": 5, "topicTitle": "送風機/離心風車性能定律與系統效應"}, {"ref": "104-1", "topicId": 9, "topicTitle": "室內空氣品質與通風換氣控制"}]}, "熱力": {"91": [{"ref": "91-2", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "91-4", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "91-3", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "91-5", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}], "94": [{"ref": "94-3", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "94-1", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "94-2", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "94-4", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}, {"ref": "94-5", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}, {"ref": "94-3", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}], "95": [{"ref": "95-1", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "95-2", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "95-4", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "95-5", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}, {"ref": "95-3", "topicId": 13, "topicTitle": "空調相關熱力性質基礎定義"}], "97": [{"ref": "97-3", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "97-1", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "97-2", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "97-5", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "97-6", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}], "100": [{"ref": "100-2", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "100-4", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "100-3", "topicId": 12, "topicTitle": "渦輪機/幫浦/壓縮機穩態穩流能量方程與效率計算"}], "101": [{"ref": "101-3", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "101-2", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "101-1", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "101-5", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}, {"ref": "101-1", "topicId": 8, "topicTitle": "暫態熱傳與塊狀熱容分析法（Lumped Capacitance）"}, {"ref": "101-1", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}], "105": [{"ref": "105-2", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "105-3", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}, {"ref": "105-4", "topicId": 8, "topicTitle": "暫態熱傳與塊狀熱容分析法（Lumped Capacitance）"}], "108": [{"ref": "108-3", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "108-1", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "108-2", "topicId": 9, "topicTitle": "熱輻射基本定律與黑體/灰體輻射計算"}, {"ref": "108-4", "topicId": 13, "topicTitle": "空調相關熱力性質基礎定義"}], "109": [{"ref": "109-1", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "109-2", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "109-4", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "109-3", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "109-6", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}, {"ref": "109-5", "topicId": 13, "topicTitle": "空調相關熱力性質基礎定義"}], "112": [{"ref": "112-1", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "112-4", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}], "114": [{"ref": "114-1", "topicId": 1, "topicTitle": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算"}, {"ref": "114-2", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "114-4", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "114-3", "topicId": 8, "topicTitle": "暫態熱傳與塊狀熱容分析法（Lumped Capacitance）"}], "90": [{"ref": "90-2", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "90-1", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "90-3", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "90-5", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}, {"ref": "90-1", "topicId": 12, "topicTitle": "渦輪機/幫浦/壓縮機穩態穩流能量方程與效率計算"}], "93": [{"ref": "93-2", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "93-1", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "93-3", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "93-4", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}, {"ref": "93-5", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}], "99": [{"ref": "99-1", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "99-2", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "99-3", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "99-4", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}], "102": [{"ref": "102-1", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "102-3", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}], "104": [{"ref": "104-1", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "104-2", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "104-1", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}], "106": [{"ref": "106-2", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "106-1", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "106-3", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "106-4", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "106-1", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}], "113": [{"ref": "113-1", "topicId": 2, "topicTitle": "多變、等溫、絕熱過程功與熱傳計算"}, {"ref": "113-2", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "113-3", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "113-5", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "113-2", "topicId": 12, "topicTitle": "渦輪機/幫浦/壓縮機穩態穩流能量方程與效率計算"}], "92": [{"ref": "92-2", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "92-1", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "92-3", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "92-4", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "92-5", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}], "96": [{"ref": "96-4", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "96-5", "topicId": 3, "topicTitle": "冷媒/蒸汽性質表查詢與循環狀態計算"}, {"ref": "96-2", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "96-1", "topicId": 9, "topicTitle": "熱輻射基本定律與黑體/灰體輻射計算"}, {"ref": "96-3", "topicId": 12, "topicTitle": "渦輪機/幫浦/壓縮機穩態穩流能量方程與效率計算"}], "103": [{"ref": "103-1", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "103-2", "topicId": 4, "topicTitle": "熱力學第二定律、可用能（Exergy）與熵分析"}, {"ref": "103-4", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "103-3", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}], "110": [{"ref": "110-3", "topicId": 5, "topicTitle": "穩態多層平板/圓管熱傳導與臨界絕熱厚度"}, {"ref": "110-7", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "110-1", "topicId": 10, "topicTitle": "熱力/熱傳基礎名詞定義與物理意義說明"}, {"ref": "110-2", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}, {"ref": "110-5", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}, {"ref": "110-6", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}], "107": [{"ref": "107-5", "topicId": 6, "topicTitle": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）"}, {"ref": "107-1", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}, {"ref": "107-2", "topicId": 12, "topicTitle": "渦輪機/幫浦/壓縮機穩態穩流能量方程與效率計算"}], "111": [{"ref": "111-4", "topicId": 7, "topicTitle": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）"}, {"ref": "111-1", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}, {"ref": "111-2", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}], "98": [{"ref": "98-2", "topicId": 11, "topicTitle": "理想氣體狀態方程與能量守恆基礎計算"}]}, "電工": {"91": [{"ref": "91-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "91-5", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "91-6", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "91-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "91-4", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "91-3", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}], "92": [{"ref": "92-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "92-2", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "92-3", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "92-4", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "92-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "92-7", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "92-6", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "93": [{"ref": "93-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "93-6", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "93-3", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "93-2", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "93-5", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "93-4", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "93-7", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}], "94": [{"ref": "94-3", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "94-5", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "94-4", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "94-1", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "94-2", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}], "96": [{"ref": "96-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "96-2", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "96-3", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "96-6", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "96-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "96-5", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}], "102": [{"ref": "102-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "102-2", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "102-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "102-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "102-3", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "104": [{"ref": "104-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "104-2", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "104-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "104-3", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "104-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}], "105": [{"ref": "105-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "105-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "105-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "105-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "105-3", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "107": [{"ref": "107-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "107-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "107-4", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "107-5", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}, {"ref": "107-6", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "108": [{"ref": "108-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "108-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "108-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "108-3", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}, {"ref": "108-4", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "109": [{"ref": "109-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "109-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "109-3", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "109-4", "topicId": 8, "topicTitle": "同步發電機運轉特性與功因補償"}, {"ref": "109-5", "topicId": 8, "topicTitle": "同步發電機運轉特性與功因補償"}], "111": [{"ref": "111-2", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "111-1", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "111-3", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "111-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "111-5", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "112": [{"ref": "112-2", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "112-1", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "112-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "112-3", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "112-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "112-1", "topicId": 8, "topicTitle": "同步發電機運轉特性與功因補償"}], "113": [{"ref": "113-1", "topicId": 1, "topicTitle": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）"}, {"ref": "113-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "113-3", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "113-3", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "113-5", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "113-4", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "90": [{"ref": "90-5", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "90-2", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "90-1", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "90-6", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "95": [{"ref": "95-4", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "95-5", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "95-3", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "95-2", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "95-1", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "97": [{"ref": "97-3", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "97-5", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "97-2", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "98": [{"ref": "98-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "98-3", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}], "100": [{"ref": "100-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "100-1", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "100-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "100-3", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "100-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}], "101": [{"ref": "101-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "101-5", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "101-3", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "101-4", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "103": [{"ref": "103-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "103-3", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "103-4", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "106": [{"ref": "106-1", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "106-3", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "106-4", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "106-5", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "110": [{"ref": "110-2", "topicId": 2, "topicTitle": "RL/RC一階暫態電路分析（開關切換、時間常數響應）"}, {"ref": "110-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "110-3", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}, {"ref": "110-4", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "99": [{"ref": "99-1", "topicId": 3, "topicTitle": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）"}, {"ref": "99-4", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "99-5", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "99-4", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "99-3", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}], "114": [{"ref": "114-1", "topicId": 4, "topicTitle": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）"}, {"ref": "114-4", "topicId": 5, "topicTitle": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）"}, {"ref": "114-3", "topicId": 6, "topicTitle": "三相感應電動機運轉特性與啟動控制"}, {"ref": "114-2", "topicId": 7, "topicTitle": "直流電機原理與特性（串激/並激/複激/永磁式）"}]}, "自控": {"92": [{"ref": "92-1", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "92-2", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "92-3", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "92-5", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "92-4", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}], "94": [{"ref": "94-1", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "94-3", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}, {"ref": "94-4", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "94-5", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}, {"ref": "94-2", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "98": [{"ref": "98-1", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "98-2", "topicId": 3, "topicTitle": "狀態方程式與狀態空間表示法"}], "99": [{"ref": "99-1", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "99-2", "topicId": 2, "topicTitle": "控制系統穩定性分析（Routh-Hurwitz準則、s平面極點）"}, {"ref": "99-4", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "99-3", "topicId": 11, "topicTitle": "控制閥與控制元件特性"}], "104": [{"ref": "104-1", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "104-2", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "104-4", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}], "108": [{"ref": "108-2", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "108-1", "topicId": 2, "topicTitle": "控制系統穩定性分析（Routh-Hurwitz準則、s平面極點）"}, {"ref": "108-3", "topicId": 10, "topicTitle": "直接數位控制(DDC)系統架構與通訊協定"}], "112": [{"ref": "112-2", "topicId": 1, "topicTitle": "PID控制器原理、轉移函數推導與調諧"}, {"ref": "112-1", "topicId": 4, "topicTitle": "拉普拉斯轉換與系統動態建模"}, {"ref": "112-5", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}, {"ref": "112-3", "topicId": 12, "topicTitle": "感測器動態方程與回授控制設計"}, {"ref": "112-4", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "96": [{"ref": "96-3", "topicId": 2, "topicTitle": "控制系統穩定性分析（Routh-Hurwitz準則、s平面極點）"}, {"ref": "96-1", "topicId": 3, "topicTitle": "狀態方程式與狀態空間表示法"}, {"ref": "96-5", "topicId": 4, "topicTitle": "拉普拉斯轉換與系統動態建模"}, {"ref": "96-2", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}, {"ref": "96-4", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}], "105": [{"ref": "105-4", "topicId": 2, "topicTitle": "控制系統穩定性分析（Routh-Hurwitz準則、s平面極點）"}, {"ref": "105-2", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "105-1", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}, {"ref": "105-3", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}], "111": [{"ref": "111-3", "topicId": 2, "topicTitle": "控制系統穩定性分析（Routh-Hurwitz準則、s平面極點）"}, {"ref": "111-4", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}, {"ref": "111-1", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "111-2", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}, {"ref": "111-1", "topicId": 11, "topicTitle": "控制閥與控制元件特性"}], "110": [{"ref": "110-3", "topicId": 3, "topicTitle": "狀態方程式與狀態空間表示法"}, {"ref": "110-1", "topicId": 4, "topicTitle": "拉普拉斯轉換與系統動態建模"}], "114": [{"ref": "114-1", "topicId": 4, "topicTitle": "拉普拉斯轉換與系統動態建模"}, {"ref": "114-5", "topicId": 4, "topicTitle": "拉普拉斯轉換與系統動態建模"}, {"ref": "114-4", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}], "100": [{"ref": "100-4", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}, {"ref": "100-3", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "100-1", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}], "101": [{"ref": "101-3", "topicId": 5, "topicTitle": "冰水管路變流量系統控制"}, {"ref": "101-1", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "101-2", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}], "95": [{"ref": "95-3", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "95-4", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "95-1", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}, {"ref": "95-2", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}, {"ref": "95-5", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "97": [{"ref": "97-4", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "97-5", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "103": [{"ref": "103-3", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "103-1", "topicId": 10, "topicTitle": "直接數位控制(DDC)系統架構與通訊協定"}, {"ref": "103-4", "topicId": 12, "topicTitle": "感測器動態方程與回授控制設計"}], "106": [{"ref": "106-4", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "106-5", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}, {"ref": "106-3", "topicId": 10, "topicTitle": "直接數位控制(DDC)系統架構與通訊協定"}], "109": [{"ref": "109-2", "topicId": 6, "topicTitle": "送風機/回風機變頻控制與VAV系統設計"}, {"ref": "109-3", "topicId": 11, "topicTitle": "控制閥與控制元件特性"}, {"ref": "109-4", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "90": [{"ref": "90-4", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "90-1", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}, {"ref": "90-2", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}], "91": [{"ref": "91-1", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "91-4", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "91-5", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}, {"ref": "91-3", "topicId": 11, "topicTitle": "控制閥與控制元件特性"}, {"ref": "91-2", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "93": [{"ref": "93-2", "topicId": 7, "topicTitle": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制"}, {"ref": "93-4", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}, {"ref": "93-5", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}, {"ref": "93-1", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}, {"ref": "93-3", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}], "113": [{"ref": "113-1", "topicId": 8, "topicTitle": "空調箱(AHU)控制架構與外氣經濟器控制"}, {"ref": "113-1", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}], "102": [{"ref": "102-3", "topicId": 9, "topicTitle": "冷卻水塔與吸收式冷凍機能量控制"}, {"ref": "102-2", "topicId": 11, "topicTitle": "控制閥與控制元件特性"}, {"ref": "102-5", "topicId": 11, "topicTitle": "控制閥與控制元件特性"}], "107": [{"ref": "107-2", "topicId": 10, "topicTitle": "直接數位控制(DDC)系統架構與通訊協定"}, {"ref": "107-3", "topicId": 12, "topicTitle": "感測器動態方程與回授控制設計"}, {"ref": "107-4", "topicId": 13, "topicTitle": "控制法則比較與空調系統整體控制設計"}]}};
+const YEARS = Array.from({length:25}, (_,i)=>90+i);
+const TOPICS = {"冷凍": [{"id": 1, "title": "卡諾、逆Rankine理想與真實單段循環計算", "desc": "考慮過冷、過熱、管路壓降之P-h圖繪製與質量/能量守恆計算", "years": "90-2, 93-1, 97-2, 98-3, 99-2, 100-2, 102-1, 102-4, 104-1, 106-1, 112-4, 113-2"}, {"id": 2, "title": "進階多級壓縮與閃氣槽系統熱力計算", "desc": "雙段壓縮、中間冷卻、理想中間壓力推導與閃氣槽節能計算", "years": "90-3, 93-3, 94-4, 100-3, 104-3, 105-2, 107-4, 108-2, 110-3, 113-3"}, {"id": 3, "title": "二元複疊（Cascade）與超臨界特殊循環計算", "desc": "高低溫迴路充填、串聯冷凝器熱平衡、CO2超臨界熱泵氣體冷卻器計算、自動覆疊式系統", "years": "101-2, 105-1, 108-4, 110-2, 111-4, 112-3"}, {"id": 4, "title": "冷媒基礎命名、熱力性質與混合冷媒特性", "desc": "鹵碳族命名規則、共沸/非共沸溫度滑移、二次冷媒與油水溶解性", "years": "90-1, 92-2, 97-1, 100-1, 109-2, 111-1"}, {"id": 5, "title": "環保法規、新一代低GWP與可燃性冷媒應用", "desc": "ODP/GWP意義、HCFC禁用因應、A2L/微燃性安全等級、異丁烷應用", "years": "94-3, 95-2, 101-1, 102-2, 103-1, 107-2, 110-1, 112-2"}, {"id": 6, "title": "吸收式（溴化鋰/氨水）與熱電冷卻（TEC）系統", "desc": "吸收式理論最大COP推導、杜林圖標示、TEC性能曲線與Peltier效應計算", "years": "92-4, 93-2, 95-1, 96-3, 98-1, 104-2, 104-4, 111-3, 114-1"}, {"id": 7, "title": "容積式壓縮機（往復/螺旋）熱力運轉特性", "desc": "往復式餘隙容積效率推導、螺旋式內容積比Vi、排氣溫度過高原因與噴液改善、滑塊/變頻容量調整比較", "years": "99-1, 99-3, 105-4, 106-2, 108-1"}, {"id": 8, "title": "速度式壓縮機（離心/磁浮）原理與喘振控制", "desc": "離心式運作與注意事項、喘振Surge機制與防護、磁浮無油壓縮機原理", "years": "91-3, 101-4, 105-3, 107-1, 109-4"}, {"id": 9, "title": "庫體穩態熱傳與總體結構顯熱負荷計算", "desc": "多層壁穩態熱傳U值公式推導、冷凍車/冷藏庫負荷項目差異、庫外輻射熱處理", "years": "94-2, 99-4, 102-3, 106-3, 107-3"}, {"id": 10, "title": "實際工程特定製程綜合冷凍負荷計算", "desc": "屠體冷卻負荷、換氣焓差、特定物料降溫與冰點以下凍結熱總負荷計算", "years": "92-1, 95-3, 100-4, 107-3"}, {"id": 11, "title": "熱交換器設計、LMTD（對數平均溫差）與熱傳率", "desc": "管內外對流熱阻、顯熱/潛熱綜合熱傳面積計算、LMTD公式與傳熱率計算", "years": "91-1, 91-2, 92-3, 96-4, 104-2, 113-4, 114-3, 114-4"}, {"id": 12, "title": "單相與兩相流體流動阻力與管路工程", "desc": "液態冷媒管內流動阻力計算、毛細管兩相流乾度、比容與流阻計算", "years": "91-4, 101-3, 114-2"}, {"id": 13, "title": "食品暫態熱傳（Heisler圖）與冷卻製程計算", "desc": "正立方體/平板食品中心溫度暫態熱傳顯熱計算、連續流動浸泡式水槽計算", "years": "92-1, 96-2"}, {"id": 14, "title": "食品凍結理論、凍結機制與熱力學性質", "desc": "最大冰晶生成帶、共晶點物理意義、凍結點下降原因、Biot數與快速冷凍關係", "years": "103-2, 104-4, 109-3, 113-1"}, {"id": 15, "title": "系統控制元件、節流裝置與電路管路實務控制", "desc": "感溫式TXV與電子式EEV運作平衡方程式、感溫球雙相充填、電磁閥與TXV控制邏輯、不可凝結氣體與積油排除", "years": "95-4, 97-3, 103-3, 111-2"}, {"id": 16, "title": "蒸發盤管結霜危害、除霜工程與除霜安全控制", "desc": "四種除霜方式、不同庫溫除霜建議、熱氣除霜運轉安全性與控制、結霜對風量影響", "years": "90-4, 94-1, 109-1"}, {"id": 17, "title": "特殊相變與雙相變應用系統工程", "desc": "空氣源熱泵變工況防霜熱平衡、雙蒸發器電冰箱系統、真空冷凍乾燥昇華與冷阱回收計算、隧道式冷凍機", "years": "96-1, 98-4, 108-3, 110-4, 112-1"}], "空調": [{"id": 1, "title": "冷卻水塔（Cooling Tower）熱質傳計算與設計", "desc": "誘導式/橫流式冷卻塔結構原理、水氣間熱質傳計算、補水蒸發損失量、多台水塔變頻卸載、部分負載節能操作", "years": "90-4, 93-4, 99-2, 101-1, 102-1, 106-2, 107-1, 113-1"}, {"id": 2, "title": "濕空氣性質、絕熱飽和過程與露點計算", "desc": "絕熱飽和器能量守恆推導、濕度比/露點/相對濕度計算、氣壓變化對飽和曲線之影響、壓縮空氣露點計算", "years": "93-3, 102-2, 103-3, 105-1, 106-4, 108-1, 109-1, 113-4"}, {"id": 3, "title": "混合空氣、冷卻盤管與旁通因子（Bypass Factor/ADP）分析", "desc": "外氣回風混合狀態、SHF顯熱比、設備露點溫度、鰭管盤管旁通因子與除濕負荷計算、直接膨脹盤管", "years": "91-2, 91-3, 91-4, 92-3, 93-2, 93-6, 94-2, 96-2, 96-4, 96-5, 97-5, 98-1, 99-5, 100-2, 101-4, 102-3, 102-4, 108-3, 110-5, 111-2, 112-5, 114-3"}, {"id": 4, "title": "空調負荷計算（外殼日射熱得、RTS法、室內綜合顯熱潛熱負荷）", "desc": "日氣溫度sol-air temperature、RTS輻射時間序列法、滲透負荷、教室/健身房/山屋等綜合空調負荷計算", "years": "92-2, 93-5, 95-1, 100-3, 107-4, 108-2, 109-2, 112-4, 114-4"}, {"id": 5, "title": "送風機/離心風車性能定律與系統效應", "desc": "風機定律（轉速-風量-壓力-功率關係）、風機P-Q曲線與Surge喘振現象、系統效應system effects", "years": "91-1, 96-3, 99-4, 104-4, 105-5, 110-1, 113-2"}, {"id": 6, "title": "管路摩擦損失、風管設計與泵浦性能", "desc": "Moody圖摩擦係數、風管尺寸設計法（等摩擦法/靜壓再得法/T法）、逆回水設計、共同管VWV系統、泵浦並串聯特性曲線", "years": "90-1, 92-1, 94-3, 94-4, 95-4, 95-5, 97-4, 99-1, 100-4, 102-5, 105-2, 107-2, 108-4, 109-4, 113-3"}, {"id": 7, "title": "熱交換器設計（ε-NTU法、鰭片熱傳、Wilson plot）", "desc": "熱交換器有效度與NTU傳遞單位數、鰭片效率與熱傳增強設計、Wilson plot測定法、殼管式冷凝器U值", "years": "90-2, 92-4, 94-1, 94-5, 111-2"}, {"id": 8, "title": "吸收式與熱驅動冷凍循環", "desc": "LiBr-H2O單效/雙效吸收式循環COP推導、飛機空氣標準冷凍循環（Brayton）", "years": "95-2, 101-2, 106-3, 112-2"}, {"id": 9, "title": "室內空氣品質與通風換氣控制", "desc": "CO2濃度控制外氣量計算、污染物排放稀釋計算、示蹤氣體法量測風管風量", "years": "97-1, 104-1, 109-3, 110-4, 114-2"}, {"id": 10, "title": "熱舒適與人體熱平衡分析", "desc": "PMV/PPD指標、平均輻射溫度與作業溫度計算", "years": "97-2, 111-1"}, {"id": 11, "title": "全熱交換器/熱回收裝置節能分析", "desc": "全熱/顯熱交換效率、run-around coil熱回收盤管、外氣預處理節能百分比計算、冷卻負載因素與焓值控制概念", "years": "96-1, 100-1, 106-1, 110-2"}, {"id": 12, "title": "潔淨室（Cleanroom）空調系統設計", "desc": "無塵室等級標準與操作狀態、單向流潔淨室構造、外氣空調箱(MAU)設計與空氣線圖繪製", "years": "90-3, 95-3, 99-5, 103-1, 106-1"}, {"id": 13, "title": "空調系統類型與末端裝置設計", "desc": "VAV、雙風管、Fan coil、Terminal reheat、Induction system之送風模式與優缺點比較", "years": "93-1, 99-1, 105-3"}, {"id": 14, "title": "空調機加濕程序計算", "desc": "蒸汽噴入加濕、水噴霧加濕效率與濕球溫度變化計算", "years": "97-3, 110-3"}, {"id": 15, "title": "資料中心與特殊環境空調設計", "desc": "機房PUE定義、高海拔低氣壓對空調系統之影響、山屋暖房設計", "years": "113-1, 114-4"}, {"id": 16, "title": "冰水主機/熱泵系統節能運轉與負載經濟分析", "desc": "多台冰水主機/冷卻水塔降載率負載最適分配、鍋爐與熱泵系統COP及電費經濟分析", "years": "99-2, 99-3, 101-3, 112-1, 112-2"}], "熱力": [{"id": 1, "title": "卡諾循環與理想熱機/冷凍機/熱泵效率COP計算", "desc": "卡諾循環熱效率與COP推導、朗肯循環與布萊頓循環主要元件、複循環提升效率原理、冷凍循環基本組件與流程", "years": "91-2, 94-3, 95-1, 95-2, 97-3, 100-2, 101-3, 105-2, 108-3, 109-1, 112-1, 114-1"}, {"id": 2, "title": "多變、等溫、絕熱過程功與熱傳計算", "desc": "可逆多變過程功之推導、壓縮機中間冷卻最佳壓力、活塞汽缸系統功與熱傳量計算", "years": "90-2, 93-2, 94-1, 97-1, 99-1, 102-1, 104-1, 106-2, 109-2, 113-1, 114-2"}, {"id": 3, "title": "冷媒/蒸汽性質表查詢與循環狀態計算", "desc": "冷媒P-h圖與蒸汽表查表應用、壓縮機等效率與第二定律效率、混合室能量平衡、冷媒槽充填過程", "years": "92-2, 93-1, 93-3, 94-2, 96-4, 96-5, 99-2, 101-2, 113-2"}, {"id": 4, "title": "熱力學第二定律、可用能（Exergy）與熵分析", "desc": "熱機是否違反第二定律判斷、Exergy可用能損失計算、系統與環境熵變化量", "years": "90-1, 92-1, 97-2, 101-1, 103-1, 103-2, 104-2, 106-1, 113-3"}, {"id": 5, "title": "穩態多層平板/圓管熱傳導與臨界絕熱厚度", "desc": "多層壁/圓管熱傳導係數推導、臨界絕熱厚度計算、管路保溫材料厚度設計", "years": "90-3, 91-4, 92-3, 95-4, 96-2, 97-5, 97-6, 100-4, 102-3, 108-1, 109-4, 110-3, 113-5"}, {"id": 6, "title": "強制對流熱傳關聯式計算（Nu, Re, Pr經驗公式）", "desc": "圓柱/平板/圓管內強制對流Nusselt數經驗公式應用、拖曳力與熱傳係數計算", "years": "91-3, 91-5, 92-4, 99-3, 103-4, 106-3, 106-4, 107-5, 109-3, 110-7, 114-4"}, {"id": 7, "title": "熱交換器設計（NTU-Effectiveness法、LMTD、殼管/鰭管式）", "desc": "熱交換器有效度與NTU法、對數平均溫差LMTD、殼管式與套管式熱交換器面積設計", "years": "93-4, 93-5, 94-4, 99-4, 101-5, 105-3, 111-4, 112-4"}, {"id": 8, "title": "暫態熱傳與塊狀熱容分析法（Lumped Capacitance）", "desc": "總容量法適用條件判斷、Biot數與暫態冷卻/加熱時間計算", "years": "101-1, 105-4, 114-3"}, {"id": 9, "title": "熱輻射基本定律與黑體/灰體輻射計算", "desc": "黑體與灰體輻射、溫室效應、漫射灰表面輻射強度與固體角計算、液體/氣體介質輻射影響比較", "years": "96-1, 108-2"}, {"id": 10, "title": "熱力/熱傳基礎名詞定義與物理意義說明", "desc": "Biot數、Nusselt數、Prandtl數、Grashof數、壓縮因子、對應狀態原理、灰體輻射、核沸騰等名詞解釋", "years": "90-5, 92-5, 94-5, 95-5, 101-1, 103-3, 109-6, 110-1"}, {"id": 11, "title": "理想氣體狀態方程與能量守恆基礎計算", "desc": "定容/定壓過程狀態變化、系統與環境熱平衡、絕熱剛性容器與非絕熱壓縮機計算", "years": "94-3, 98-2, 104-1, 106-1, 107-1, 110-2, 110-5, 110-6, 111-1, 111-2"}, {"id": 12, "title": "渦輪機/幫浦/壓縮機穩態穩流能量方程與效率計算", "desc": "質量流率、焓差、渦輪機功率輸出與效率計算、泵浦揚程功率計算", "years": "90-1, 96-3, 100-3, 107-2, 113-2"}, {"id": 13, "title": "空調相關熱力性質基礎定義", "desc": "乾濕球溫度、露點溫度、相對濕度、空氣燃料比、衝程等空調熱力名詞定義", "years": "95-3, 108-4, 109-5"}], "電工": [{"id": 1, "title": "直流電阻電路分析（節點/迴路法、戴維寧諾頓等效、最大功率轉移）", "desc": "克希荷夫電流/電壓定律應用、戴維寧與諾頓等效電路化簡、負載匹配最大功率轉移計算", "years": "91-1, 91-5, 91-6, 92-1, 92-2, 92-3, 93-1, 93-6, 94-3, 94-5, 96-1, 96-2, 102-1, 104-1, 105-1, 107-1, 108-1, 109-1, 111-2, 112-2, 113-1"}, {"id": 2, "title": "RL/RC一階暫態電路分析（開關切換、時間常數響應）", "desc": "一階RL/RC電路微分方程求解、開關切換前後電流電壓響應波形、時間常數計算", "years": "90-5, 91-2, 93-3, 94-4, 95-4, 96-3, 97-3, 98-2, 100-2, 101-2, 103-2, 105-2, 106-1, 107-2, 108-2, 109-2, 110-2, 113-2"}, {"id": 3, "title": "交流穩態電路相量分析（實功虛功視在功率、功因、諧振）", "desc": "相量法交流電路分析、實功/虛功/視在功率計算、RLC串並聯諧振頻率計算、諾頓等效電路法", "years": "90-2, 91-4, 92-4, 93-2, 93-5, 95-5, 99-1, 100-1, 102-2, 104-2, 106-3, 107-4, 111-1, 113-3"}, {"id": 4, "title": "三相平衡電路分析（Y-Δ接線、線電壓相電壓、三相功率）", "desc": "三相Y接與Δ接電路換算、線電壓相電壓關係、三相總實功率與功因計算", "years": "91-3, 96-6, 99-4, 101-5, 106-4, 111-3, 112-1, 113-3, 114-1"}, {"id": 5, "title": "變壓器原理、等效電路與效率分析（含磁路與磁化曲線）", "desc": "開路短路試驗求等效電路參數、電壓調整率、變壓器效率與全日效率、自耦變壓器容量計算、環型線圈磁場強度計算", "years": "90-1, 92-5, 93-4, 94-1, 95-3, 98-3, 99-5, 100-5, 102-5, 104-5, 105-5, 108-5, 109-3, 110-5, 112-5, 114-4"}, {"id": 6, "title": "三相感應電動機運轉特性與啟動控制", "desc": "轉差率、等效電路氣隙功率、Y-Δ降壓啟動、功因改善並聯電容、變頻器控制應用", "years": "92-7, 93-7, 94-2, 95-2, 96-4, 96-5, 97-5, 99-4, 100-3, 100-4, 101-3, 102-4, 103-3, 104-3, 104-4, 105-4, 111-4, 112-3, 112-4, 113-5, 114-3"}, {"id": 7, "title": "直流電機原理與特性（串激/並激/複激/永磁式）", "desc": "電樞反應與改善方法、轉矩轉速控制特性、反電動勢常數推導、電樞電阻測定", "years": "90-6, 92-6, 95-1, 97-2, 99-3, 101-4, 102-3, 103-4, 105-3, 106-5, 107-5, 107-6, 108-3, 108-4, 110-3, 110-4, 111-5, 113-4, 114-2"}, {"id": 8, "title": "同步發電機運轉特性與功因補償", "desc": "同步發電機並聯運轉負載分配、同步電動機內部電勢與轉矩、並聯電容功因改善計算", "years": "109-4, 109-5, 112-1"}], "自控": [{"id": 1, "title": "PID控制器原理、轉移函數推導與調諧", "desc": "PID控制器數學模型與網路電路推導、Ziegler-Nichols經驗法則決定Kp/Ti/Td參數、比例增益調整對控制特性之影響", "years": "92-1, 94-1, 98-1, 99-1, 104-1, 108-2, 112-2"}, {"id": 2, "title": "控制系統穩定性分析（Routh-Hurwitz準則、s平面極點）", "desc": "特性方程式穩定性判別、Routh-Hurwitz準則求增益範圍、s平面極點位置與時域響應對應", "years": "96-3, 99-2, 105-4, 108-1, 111-3"}, {"id": 3, "title": "狀態方程式與狀態空間表示法", "desc": "狀態變數與狀態方程式建立、狀態圖繪製、轉移函數與狀態空間互換", "years": "96-1, 98-2, 110-3"}, {"id": 4, "title": "拉普拉斯轉換與系統動態建模", "desc": "拉氏轉換定義與收斂條件、時域動態方程式轉換為複變域轉移函數、熱交換器溫度控制方塊圖建模", "years": "96-5, 110-1, 112-1, 114-1, 114-5"}, {"id": 5, "title": "冰水管路變流量系統控制", "desc": "一次側/二次側變流量系統、共同管VWV設計、變頻泵浦控制與感測點位置對耗能之影響、Q-H曲線節能原理", "years": "94-3, 96-2, 100-4, 101-3, 111-4, 112-5, 114-4"}, {"id": 6, "title": "送風機/回風機變頻控制與VAV系統設計", "desc": "變風量系統送風/回風機轉速協調控制、定靜壓與變靜壓控制法、風量控制方式比較、閘門damper特性、風扇與分配控制器", "years": "94-4, 95-3, 97-4, 99-4, 100-3, 103-3, 105-2, 106-4, 109-2"}, {"id": 7, "title": "冷媒膨脹裝置、壓縮機與冷凍系統安全控制", "desc": "感溫式TXV/電子式EEV/毛細管比較、外部平衡管功能、熱氣除霜控制邏輯、壓縮機安全保護裝置、冷媒控制器形式與冷凍系統電氣配線圖", "years": "90-4, 91-1, 91-4, 92-2, 92-3, 92-5, 93-2, 95-4, 101-1, 104-2, 104-4, 111-1"}, {"id": 8, "title": "空調箱(AHU)控制架構與外氣經濟器控制", "desc": "露點溫度控制技術、外氣風門控制、雙路徑/單路徑空調箱economizer系統設計、溫濕度控制系統原理、全年空調控制策略", "years": "90-1, 90-2, 92-4, 93-4, 94-5, 101-2, 111-2, 113-1"}, {"id": 9, "title": "冷卻水塔與吸收式冷凍機能量控制", "desc": "冷卻水塔自然冷卻控制法、多台水塔變頻卸載邏輯、吸收式冷凍機能量調節與結晶問題防範、三通閥台數控制缺點、替代能源驅動系統節能控制、耗電量交換(trade-off)分析", "years": "91-5, 93-5, 96-4, 100-1, 102-3, 105-1, 105-3, 106-5, 113-1"}, {"id": 10, "title": "直接數位控制(DDC)系統架構與通訊協定", "desc": "DDC訊號處理架構、類比/數位訊號轉換、通訊協定路由器/橋接器選用、AIoT邊緣運算應用", "years": "103-1, 106-3, 107-2, 108-3"}, {"id": 11, "title": "控制閥與控制元件特性", "desc": "水閥流量係數Cv值、電動控制閥開度與流量非線性關係、風門damper種類與控制功能、接收控制器比例設定與彈簧壓力範圍", "years": "91-3, 99-3, 102-2, 102-5, 109-3, 111-1"}, {"id": 12, "title": "感測器動態方程與回授控制設計", "desc": "溫度感測器統馭方程式推導、感測器轉移函數、熱預測(heat anticipator)設計原理", "years": "103-4, 107-3, 112-3"}, {"id": 13, "title": "控制法則比較與空調系統整體控制設計", "desc": "開關/浮動/步動/調變控制法則比較、正向與反向恆溫器操作、PLC可程式邏輯控制設計、開迴路/閉迴路/回饋控制差異、控制設備基本原理與差動值調整", "years": "91-2, 93-1, 93-3, 94-2, 95-1, 95-2, 95-5, 97-5, 107-4, 109-4, 112-4"}]};
+const SUBJECTS = Object.keys(TOPICS);
+const TOTAL_TOPICS = SUBJECTS.reduce((s,k)=>s+TOPICS[k].length,0);
+const LIMIT_MIN = {"電工":40};
+const DEFAULT_LIMIT = 30;
+const ROUND2_MIN = 120;
+
+/* ================= STORAGE ================= */
+const DEFAULTS = { examDate:null, topicStatus:{}, logs:[], todayPicks:[], paperStatus:{}, settings:{ pdfBase:'pdfs/' }, records:{}, fileMeta:{} };
+let STATE = JSON.parse(JSON.stringify(DEFAULTS));
+
+const HAS_CLAUDE_STORAGE = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+const LS_KEY = 'exam-sprint-app-state';
+
+async function loadState(){
+  let loaded = false;
+  if(HAS_CLAUDE_STORAGE){
+    try{
+      const r = await window.storage.get('app-state');
+      if(r && r.value){
+        const parsed = JSON.parse(r.value);
+        STATE = deepMergeDefaults(parsed);
+        loaded = true;
+      }
+    }catch(e){ console.warn('window.storage load failed, trying localStorage', e); }
+  }
+  if(!loaded){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        STATE = deepMergeDefaults(parsed);
+        loaded = true;
+      }
+    }catch(e){ console.warn('localStorage load failed', e); }
+  }
+}
+function deepMergeDefaults(saved){
+  const base = JSON.parse(JSON.stringify(DEFAULTS));
+  const merged = Object.assign(base, saved);
+  merged.topicStatus = Object.assign({}, base.topicStatus, saved.topicStatus||{});
+  merged.paperStatus = Object.assign({}, base.paperStatus, saved.paperStatus||{});
+  merged.settings = Object.assign({}, base.settings, saved.settings||{});
+  merged.records = Object.assign({}, base.records, saved.records||{});
+  merged.fileMeta = Object.assign({}, base.fileMeta, saved.fileMeta||{});
+  merged.logs = Array.isArray(saved.logs) ? saved.logs : [];
+  return merged;
+}
+let saveTimer=null;
+function saveState(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    const payload = JSON.stringify(STATE);
+    // Always write to localStorage as a safety net, regardless of environment
+    try{ localStorage.setItem(LS_KEY, payload); }catch(e){ console.warn('localStorage save failed', e); }
+    if(HAS_CLAUDE_STORAGE){
+      try{ await window.storage.set('app-state', payload); }catch(e){ console.warn('window.storage save failed', e); }
+    }
+  }, 250);
+}
+
+/* ================= TOAST ================= */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h);
+  t._h=setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ================= NAV ================= */
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  if(name==='plan') renderPlan();
+  if(name==='log') renderLog();
+  if(name==='home') renderHome();
+  if(name==='timer'){ renderTimerSubjectGrid(); renderTopicPicker(); renderYearPicker(); }
+  if(name==='mistakes') renderMistakeBook();
+}
+
+/* ================= CLOCK / COUNTDOWN ================= */
+let timeOffset = 0; // networkTime - deviceTime
+async function syncNetworkTime(){
+  const endpoints = [
+    'https://timeapi.io/api/Time/current/zone?timeZone=Asia%2FTaipei',
+    'https://worldtimeapi.org/api/timezone/Asia/Taipei'
+  ];
+  for(const url of endpoints){
+    try{
+      const res = await fetch(url, {cache:'no-store'});
+      if(!res.ok) continue;
+      const data = await res.json();
+      let iso = data.dateTime || data.datetime;
+      if(iso){
+        const netTime = new Date(iso).getTime();
+        timeOffset = netTime - Date.now();
+        document.getElementById('clockNow').title='已同步網路時間';
+        return;
+      }
+    }catch(e){ /* try next */ }
+  }
+  document.getElementById('clockNow').title='離線，使用裝置時間';
+}
+function nowMs(){ return Date.now() + timeOffset; }
+
+function tickClock(){
+  const d = new Date(nowMs());
+  const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0'), ss=String(d.getSeconds()).padStart(2,'0');
+  document.getElementById('clockNow').textContent = `${hh}:${mm}:${ss}`;
+  updateCountdown();
+}
+function updateCountdown(){
+  const daysEl=document.getElementById('daysLeft'), hmsEl=document.getElementById('hmsLeft'), lineEl=document.getElementById('examDateLine');
+  if(!STATE.examDate){
+    daysEl.textContent='--'; hmsEl.textContent='請先設定考試日期';
+    lineEl.innerHTML='尚未設定考試日期 <button onclick="openDateModal()">設定</button>';
+    return;
+  }
+  const target = new Date(STATE.examDate+'T09:00:00+08:00').getTime();
+  let diff = target - nowMs();
+  const passed = diff < 0;
+  diff = Math.abs(diff);
+  const days = Math.floor(diff/86400000);
+  const hrs = Math.floor((diff%86400000)/3600000);
+  const mins = Math.floor((diff%3600000)/60000);
+  const secs = Math.floor((diff%60000)/1000);
+  daysEl.textContent = (passed?'+':'') + days;
+  hmsEl.textContent = `${String(hrs).padStart(2,'0')} 時 ${String(mins).padStart(2,'0')} 分 ${String(secs).padStart(2,'0')} 秒`;
+  lineEl.innerHTML = `考試日：${STATE.examDate} <button onclick="openDateModal()">修改</button>`;
+}
+
+function openDateModal(){
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.innerHTML = `<div class="modal">
+    <h3>設定考試日期</h3>
+    <div class="field"><input type="date" id="examDateInput" value="${STATE.examDate||''}"></div>
+    <div class="timer-controls">
+      <button class="btn btn-secondary" id="cancelDateBtn">取消</button>
+      <button class="btn btn-primary" id="saveDateBtn">儲存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.querySelector('#cancelDateBtn').onclick=()=>backdrop.remove();
+  backdrop.querySelector('#saveDateBtn').onclick=()=>{
+    const v=backdrop.querySelector('#examDateInput').value;
+    if(v){ STATE.examDate=v; saveState(); updateCountdown(); toast('已更新考試日期'); }
+    backdrop.remove();
+  };
+}
+
+/* ================= SETTINGS (PDF SOURCE) ================= */
+function getPdfBase(){
+  const b = (STATE.settings && STATE.settings.pdfBase) || 'pdfs/';
+  return b.endsWith('/') ? b : b + '/';
+}
+function openSettingsModal(){
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.innerHTML = `<div class="modal">
+    <h3>PDF 資料來源設定</h3>
+    <div style="font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px;">
+      考卷檔名格式為「科目-年份.pdf」（例如 冷凍-90.pdf）。
+      預設會抓取與本頁面同層的 pdfs/ 資料夾。若你把 PDF 放在別的網址（例如 GitHub raw 連結），
+      在下面填入該資料夾的網址（結尾需含 /）。
+    </div>
+    <div class="field">
+      <label>PDF 資料夾網址</label>
+      <input type="text" id="pdfBaseInput" placeholder="pdfs/" value="${(STATE.settings&&STATE.settings.pdfBase)||'pdfs/'}" style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;color:var(--text);font-family:var(--mono);font-size:13px;">
+    </div>
+    <div class="timer-controls">
+      <button class="btn btn-secondary" id="cancelPdfBtn">取消</button>
+      <button class="btn btn-primary" id="savePdfBtn">儲存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  backdrop.querySelector('#cancelPdfBtn').onclick=()=>backdrop.remove();
+  backdrop.querySelector('#savePdfBtn').onclick=()=>{
+    let v=backdrop.querySelector('#pdfBaseInput').value.trim();
+    if(!v) v='pdfs/';
+    if(!STATE.settings) STATE.settings={};
+    STATE.settings.pdfBase=v;
+    saveState();
+    toast('已更新 PDF 來源設定');
+    backdrop.remove();
+  };
+}
+
+/* ================= TOPIC STATUS ================= */
+function topicKey(subject,id){ return subject+'-'+id; }
+function getStatus(subject,id){ return STATE.topicStatus[topicKey(subject,id)] || 'none'; }
+function cycleStatus(subject,id){
+  const k=topicKey(subject,id);
+  const cur=STATE.topicStatus[k]||'none';
+  const next = cur==='none' ? 'today' : cur==='today' ? 'done' : 'none';
+  STATE.topicStatus[k]=next;
+  saveState();
+}
+function setStatus(subject,id,status){
+  STATE.topicStatus[topicKey(subject,id)]=status; saveState();
+}
+function countStatus(subject, status){
+  return TOPICS[subject].filter(t=>getStatus(subject,t.id)===status).length;
+}
+function countDoneAll(){
+  let n=0;
+  SUBJECTS.forEach(s=> n += countStatus(s,'done'));
+  return n;
+}
+
+/* ================= HOME RENDER ================= */
+function renderHome(){
+  document.getElementById('gaugeDone').textContent = countDoneAll()+'/'+TOTAL_TOPICS;
+  const totalMin = STATE.logs.reduce((s,l)=>s+l.minutes,0);
+  document.getElementById('gaugeHours').textContent = (totalMin/60).toFixed(1)+'h';
+  document.getElementById('gaugeStreak').textContent = computeStreak();
+
+  const todayEl=document.getElementById('todayList');
+  todayEl.innerHTML='';
+  let has=false;
+  SUBJECTS.forEach(subject=>{
+    TOPICS[subject].forEach(t=>{
+      if(getStatus(subject,t.id)==='today'){
+        has=true;
+        const div=document.createElement('div');
+        div.className='item';
+        div.innerHTML=`<span class="tag">${subject}</span><span class="title">${t.title}</span><span class="go-btn" onclick="startTimerFor('${subject}',${t.id})">▶ 計時</span>`;
+        todayEl.appendChild(div);
+      }
+    });
+  });
+  if(!has){ todayEl.innerHTML='<div class="empty">尚未挑選今日待讀考點，前往「計畫」頁籤點選吧。</div>'; }
+
+  const barsEl=document.getElementById('homeSubjectBars');
+  barsEl.innerHTML='';
+  SUBJECTS.forEach(subject=>{
+    const total=TOPICS[subject].length, done=countStatus(subject,'done');
+    const pct=Math.round(done/total*100);
+    const row=document.createElement('div');
+    row.className='sbar-row';
+    row.innerHTML=`<div class="top"><span class="name">${subject}</span><span class="frac">${done}/${total}</span></div>
+      <div class="progressbar"><div class="fill" style="width:${pct}%"></div></div>`;
+    barsEl.appendChild(row);
+  });
+
+  const papersEl=document.getElementById('homePaperBars');
+  if(papersEl){
+    papersEl.innerHTML='';
+    SUBJECTS.forEach(subject=>{
+      const done=countPapersDone(subject);
+      const pct=Math.round(done/25*100);
+      const row=document.createElement('div');
+      row.className='sbar-row';
+      row.innerHTML=`<div class="top"><span class="name">${subject}</span><span class="frac">${done}/25 年</span></div>
+        <div class="progressbar"><div class="fill" style="width:${pct}%; background:linear-gradient(90deg,var(--amber-dim),var(--amber));"></div></div>`;
+      papersEl.appendChild(row);
+    });
+  }
+}
+function computeStreak(){
+  if(!STATE.logs.length) return 0;
+  const days = new Set(STATE.logs.map(l=>l.date));
+  let streak=0;
+  let d = new Date(nowMs());
+  for(let i=0;i<365;i++){
+    const key = d.toISOString().slice(0,10);
+    if(days.has(key)){ streak++; d.setDate(d.getDate()-1); }
+    else if(i===0){ d.setDate(d.getDate()-1); continue; }
+    else break;
+  }
+  return streak;
+}
+
+/* ================= PLAN RENDER ================= */
+let currentPlanSubject = SUBJECTS[0];
+function renderPlanTabs(){
+  const wrap=document.getElementById('planTabs');
+  wrap.innerHTML='';
+  SUBJECTS.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='subject-tab'+(s===currentPlanSubject?' active':'');
+    b.textContent=s;
+    b.onclick=()=>{ currentPlanSubject=s; renderPlan(); };
+    wrap.appendChild(b);
+  });
+}
+function renderPlan(){
+  renderPlanTabs();
+  const subject=currentPlanSubject;
+  const total=TOPICS[subject].length, done=countStatus(subject,'done');
+  document.getElementById('planProgressFill').style.width=(done/total*100)+'%';
+  document.getElementById('planProgressLabel').textContent=`${done} / ${total} 已完成`;
+  document.getElementById('planProgressPct').textContent=Math.round(done/total*100)+'%';
+
+  const list=document.getElementById('planTopicList');
+  list.innerHTML='';
+  TOPICS[subject].forEach(t=>{
+    const status=getStatus(subject,t.id);
+    const div=document.createElement('div');
+    div.className='topic';
+    div.innerHTML=`
+      <div class="topic-head" onclick="toggleTopicBody(this)">
+        <span class="topic-num">${String(t.id).padStart(2,'0')}</span>
+        <span class="topic-title">${t.title}</span>
+        <span class="status-dot ${status==='today'?'today':status==='done'?'done':''}">${status==='done'?'✓':status==='today'?'●':''}</span>
+      </div>
+      <div class="topic-body">
+        <div class="desc">${t.desc}</div>
+        <div class="years-hint">點一下年份題號可直接開啟該年 PDF 考卷</div>
+        <div class="years-chips">${yearsChipsHtml(subject, t.years)}</div>
+        <div class="actions">
+          <div class="mini-btn ${status==='today'?'on-today':''}" onclick="event.stopPropagation(); setStatus('${subject}',${t.id},'${status==='today'?'none':'today'}'); renderPlan(); renderHome();">今日待讀</div>
+          <div class="mini-btn ${status==='done'?'on-done':''}" onclick="event.stopPropagation(); setStatus('${subject}',${t.id},'${status==='done'?'none':'done'}'); renderPlan(); renderHome();">標記完成</div>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+function toggleTopicBody(headEl){
+  const body=headEl.nextElementSibling;
+  const isOpen=body.classList.contains('open');
+  headEl.closest('#planTopicList').querySelectorAll('.topic-body.open').forEach(b=>b.classList.remove('open'));
+  if(!isOpen) body.classList.add('open');
+}
+
+/* ================= TIMER ================= */
+let timerRound = 1;
+let timerSubject = null;
+let timerTopicId = null;
+let timerYear = null;
+let round1MarkDone = false;
+let timerInterval = null;
+let remainingSec = 0;
+let totalSec = 0;
+let paused = true;
+let questionIndex = 1;
+let questionRefs = [];
+let questionRefIdx = 0;
+let sessionMinutesAccum = 0;
+let sessionStartTs = null;
+let round2CheckedIds = new Set();
+
+function todayTopicsFor(subject){ return TOPICS[subject].filter(t=>getStatus(subject,t.id)==='today'); }
+
+/* ---- PDF linking ---- */
+function pdfUrl(subject, year){ return getPdfBase() + encodeURIComponent(subject + '-' + year) + '.pdf'; }
+function openPdf(subject, year){
+  if(!subject || !year){ toast('找不到對應年度'); return; }
+  const url = pdfUrl(subject, year);
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+function refToYear(ref){ const m = (ref||'').match(/^(\d+)-/); return m ? m[1] : null; }
+function yearsChipsHtml(subject, yearsStr){
+  return yearsStr.split(',').map(s=>s.trim()).filter(Boolean).map(ref=>{
+    const yr = refToYear(ref);
+    return `<span class="year-chip" onclick="openPdf('${subject}','${yr}')">${ref}</span>`;
+  }).join('');
+}
+function currentSessionYear(){
+  if(timerRound===2) return timerYear;
+  if(questionRefs.length && questionRefIdx < questionRefs.length){
+    return refToYear(questionRefs[questionRefIdx]);
+  }
+  return null;
+}
+function renderPdfButton(){
+  const wrap=document.getElementById('pdfBtnWrap');
+  if(!wrap) return;
+  const yr = currentSessionYear();
+  if(!yr){ wrap.innerHTML=''; return; }
+  const label = timerRound===2
+    ? `📄 開啟 ${yr} 年 ${timerSubject} 考卷 PDF`
+    : `📄 開啟 ${yr} 年 ${timerSubject} 考卷 PDF（第 ${questionRefIdx+1} 題）`;
+  wrap.innerHTML = `<span class="pdf-btn" onclick="openPdf('${timerSubject}','${yr}')">${label}</span>`;
+}
+
+/* ================= RECORDS (紅黃綠卡 / 筆記 / 附件 / 錯題本) ================= */
+function genId(){ return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function recordKey(subject, ref){ return subject + '|' + ref; }
+function blankRecord(){ return {color:null, understood:null, note:'', fileIds:[], updatedAt:0}; }
+function getRecord(subject, ref){
+  const k = recordKey(subject, ref);
+  return Object.assign(blankRecord(), STATE.records[k]);
+}
+function hasRecordContent(rec){
+  return !!(rec.color || (rec.note && rec.note.trim()) || (rec.fileIds && rec.fileIds.length));
+}
+function setRecordColor(subject, ref, color){
+  const k = recordKey(subject, ref);
+  const rec = getRecord(subject, ref);
+  rec.color = (rec.color===color) ? null : color;
+  rec.updatedAt = Date.now();
+  STATE.records[k] = rec;
+  saveState();
+}
+
+/* ---- file storage (kept separate from main state to avoid bloating it) ---- */
+async function storeFile(id, dataUrl){
+  if(HAS_CLAUDE_STORAGE){
+    try{ await window.storage.set('file:'+id, dataUrl); return true; }catch(e){ console.warn('file store (claude) failed', e); }
+  }
+  try{ localStorage.setItem('exam-file-'+id, dataUrl); return true; }
+  catch(e){ console.warn('file store (local) failed', e); toast('檔案儲存失敗，可能是空間不足，建議選較小的照片'); return false; }
+}
+async function loadFile(id){
+  if(HAS_CLAUDE_STORAGE){
+    try{ const r = await window.storage.get('file:'+id); if(r && r.value) return r.value; }catch(e){}
+  }
+  try{ return localStorage.getItem('exam-file-'+id); }catch(e){ return null; }
+}
+async function deleteFile(id){
+  if(HAS_CLAUDE_STORAGE){ try{ await window.storage.delete('file:'+id); }catch(e){} }
+  try{ localStorage.removeItem('exam-file-'+id); }catch(e){}
+}
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function readAndCompressImage(file, maxWidth, quality){
+  maxWidth = maxWidth || 1000; quality = quality || 0.65;
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w=img.width, h=img.height;
+        if(w>maxWidth){ h = Math.round(h*maxWidth/w); w=maxWidth; }
+        const canvas=document.createElement('canvas');
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = ()=>resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---- record editor modal ---- */
+function openRecordEditor(subject, ref, topicTitle){
+  const k = recordKey(subject, ref);
+  const rec = getRecord(subject, ref);
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.innerHTML = `<div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
+    <h3>${subject} ・ <span style="font-family:var(--mono);color:var(--teal);">${ref}</span></h3>
+    <div style="font-size:11.5px;color:var(--sub-2);margin-bottom:14px;">${topicTitle||''}</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="card-btn card-red ${rec.color==='red'?'active':''}" data-color="red">🔴 紅卡</button>
+      <button class="card-btn card-yellow ${rec.color==='yellow'?'active':''}" data-color="yellow">🟡 黃卡</button>
+      <button class="card-btn card-green ${rec.color==='green'?'active':''}" data-color="green">🟢 綠卡</button>
+    </div>
+    <div class="seg-toggle" style="margin-bottom:14px;">
+      <button class="seg-btn" data-u="true">✓ 已清楚了解</button>
+      <button class="seg-btn" data-u="false">✎ 需要補充內容</button>
+    </div>
+    <div class="field">
+      <label>筆記 / 補充內容</label>
+      <textarea id="recNote" rows="5" placeholder="打錯在哪、還不懂的觀念、下次要注意什麼..." style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);font-size:13px;font-family:inherit;">${rec.note||''}</textarea>
+    </div>
+    <div class="field">
+      <label>附加照片／PDF（例如手寫解題過程）</label>
+      <input type="file" id="recFile" accept="image/*,.pdf" multiple style="width:100%;font-size:12px;color:var(--sub);">
+      <div id="recFileList" style="margin-top:8px;"></div>
+    </div>
+    <div class="timer-controls">
+      <button class="btn btn-secondary" id="cancelRecBtn">取消</button>
+      <button class="btn btn-primary" id="saveRecBtn">儲存</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+
+  let localColor = rec.color;
+  let localUnderstood = rec.understood;
+  let localFileIds = (rec.fileIds||[]).slice();
+
+  backdrop.querySelectorAll('.card-btn').forEach(b=>{
+    b.onclick=()=>{
+      localColor = (localColor===b.dataset.color) ? null : b.dataset.color;
+      backdrop.querySelectorAll('.card-btn').forEach(x=>x.classList.toggle('active', x.dataset.color===localColor));
+    };
+  });
+  backdrop.querySelectorAll('.seg-btn').forEach(b=>{
+    b.classList.toggle('active', (b.dataset.u==='true')===(localUnderstood===true) && localUnderstood!==null);
+    b.onclick=()=>{
+      localUnderstood = (b.dataset.u==='true');
+      backdrop.querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('active', x===b));
+    };
+  });
+
+  function renderFileList(){
+    const wrap = backdrop.querySelector('#recFileList');
+    wrap.innerHTML='';
+    localFileIds.forEach(fid=>{
+      const meta = (STATE.fileMeta && STATE.fileMeta[fid]) || {name:'附件'};
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;color:var(--sub);border-bottom:1px solid var(--line);';
+      row.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📎 ${meta.name}</span><span style="color:var(--red);cursor:pointer;flex-shrink:0;">移除</span>`;
+      row.querySelector('span:last-child').onclick=()=>{
+        localFileIds = localFileIds.filter(x=>x!==fid);
+        renderFileList();
+      };
+      wrap.appendChild(row);
+    });
+  }
+  renderFileList();
+
+  backdrop.querySelector('#recFile').onchange = async (e)=>{
+    const files = Array.from(e.target.files||[]);
+    if(!files.length) return;
+    toast('處理附件中...');
+    for(const file of files){
+      const id = genId();
+      let dataUrl;
+      try{
+        dataUrl = file.type.startsWith('image/') ? await readAndCompressImage(file) : await readFileAsDataUrl(file);
+      }catch(err){ continue; }
+      const ok = await storeFile(id, dataUrl);
+      if(ok){
+        STATE.fileMeta = STATE.fileMeta || {};
+        STATE.fileMeta[id] = {name:file.name, type:file.type};
+        localFileIds.push(id);
+      }
+    }
+    renderFileList();
+    toast('已加入附件');
+  };
+
+  const close=()=>backdrop.remove();
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) close(); });
+  backdrop.querySelector('#cancelRecBtn').onclick=close;
+  backdrop.querySelector('#saveRecBtn').onclick=()=>{
+    const note = backdrop.querySelector('#recNote').value;
+    STATE.records[k] = { color:localColor, understood:localUnderstood, note, fileIds:localFileIds, updatedAt:Date.now(), subject, ref, topicTitle:topicTitle||'' };
+    saveState();
+    close();
+    toast('已儲存');
+    renderRecordQuickbar();
+    if(timerRound===2) renderRound2Checklist();
+  };
+}
+
+/* ---- Round 1 quickbar wiring ---- */
+function currentRecordRef(){
+  if(questionRefs.length && questionRefIdx < questionRefs.length) return questionRefs[questionRefIdx];
+  return null;
+}
+function quickSetColor(color){
+  const ref = currentRecordRef();
+  if(!ref || !timerSubject){ toast('這一題沒有對應的年份題號，無法標記'); return; }
+  setRecordColor(timerSubject, ref, color);
+  renderRecordQuickbar();
+}
+function openCurrentRecordEditor(){
+  const ref = currentRecordRef();
+  if(!ref || !timerSubject){ toast('這一題沒有對應的年份題號，無法加筆記'); return; }
+  const topicObj = timerTopicId!=null ? (TOPICS[timerSubject].find(t=>t.id===timerTopicId)||{}).title : '';
+  openRecordEditor(timerSubject, ref, topicObj);
+}
+function renderRecordQuickbar(){
+  const wrap = document.getElementById('recordQuickbar');
+  if(!wrap) return;
+  const ref = currentRecordRef();
+  if(!ref || timerRound!==1){ wrap.style.display='none'; return; }
+  wrap.style.display='flex';
+  const rec = getRecord(timerSubject, ref);
+  wrap.querySelectorAll('.qc-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.color===rec.color);
+  });
+  const noteBtn = document.getElementById('qcNoteBtn');
+  if(noteBtn) noteBtn.classList.toggle('has-note', !!(rec.note && rec.note.trim()) || (rec.fileIds&&rec.fileIds.length>0));
+}
+
+/* ---- Mistake Book tab ---- */
+let mistakeFilters = new Set(['red','yellow']);
+let mistakeSubjectFilter = null;
+let mistakeSelected = new Set();
+function toggleMistakeFilter(f, el){
+  if(mistakeFilters.has(f)) mistakeFilters.delete(f); else mistakeFilters.add(f);
+  el.classList.toggle('active');
+  renderMistakeBook();
+}
+function allRecordsList(){
+  return Object.keys(STATE.records).map(k=>{
+    const rec = STATE.records[k];
+    return rec;
+  }).filter(hasRecordContent);
+}
+function renderMistakeSubjectTabs(){
+  const wrap = document.getElementById('mistakeSubjectTabs');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  const allBtn=document.createElement('button');
+  allBtn.className='subject-tab'+(mistakeSubjectFilter===null?' active':'');
+  allBtn.textContent='全部';
+  allBtn.onclick=()=>{ mistakeSubjectFilter=null; renderMistakeBook(); };
+  wrap.appendChild(allBtn);
+  SUBJECTS.forEach(s=>{
+    const b=document.createElement('button');
+    b.className='subject-tab'+(mistakeSubjectFilter===s?' active':'');
+    b.textContent=s;
+    b.onclick=()=>{ mistakeSubjectFilter=s; renderMistakeBook(); };
+    wrap.appendChild(b);
+  });
+}
+function filteredMistakes(){
+  return allRecordsList().filter(rec=>{
+    if(mistakeSubjectFilter && rec.subject!==mistakeSubjectFilter) return false;
+    const colorOk = rec.color && mistakeFilters.has(rec.color);
+    const noteOk = mistakeFilters.has('note') && rec.note && rec.note.trim();
+    if(mistakeFilters.has('red')||mistakeFilters.has('yellow')||mistakeFilters.has('green')||mistakeFilters.has('note')){
+      return colorOk || noteOk;
+    }
+    return true;
+  }).sort((a,b)=> (b.updatedAt||0)-(a.updatedAt||0));
+}
+function renderMistakeBook(){
+  renderMistakeSubjectTabs();
+  const list = filteredMistakes();
+  const el = document.getElementById('mistakeList');
+  const empty = document.getElementById('mistakeEmpty');
+  if(!el) return;
+  el.innerHTML='';
+  empty.style.display = list.length ? 'none' : 'block';
+  list.forEach(rec=>{
+    const key = recordKey(rec.subject, rec.ref);
+    const checked = mistakeSelected.has(key);
+    const div=document.createElement('div');
+    div.className='mistake-item';
+    const fileCount = (rec.fileIds||[]).length;
+    div.innerHTML = `
+      <div class="mi-top">
+        <span class="mi-check ${checked?'checked':''}">${checked?'✓':''}</span>
+        ${rec.color?`<span class="mi-badge ${rec.color}">${rec.color==='red'?'紅卡':rec.color==='yellow'?'黃卡':'綠卡'}</span>`:''}
+        <span class="mi-title">${rec.subject} · <span style="color:var(--teal);font-family:var(--mono);">${rec.ref}</span> · ${rec.topicTitle||''}</span>
+      </div>
+      ${rec.note?`<div class="mi-note">${rec.note.replace(/</g,'&lt;')}</div>`:''}
+      ${fileCount?`<div class="mi-files">📎 ${fileCount} 個附件</div>`:''}
+    `;
+    div.querySelector('.mi-check').onclick=()=>{
+      if(mistakeSelected.has(key)) mistakeSelected.delete(key); else mistakeSelected.add(key);
+      renderMistakeBook();
+    };
+    div.querySelector('.mi-title').onclick=()=>openRecordEditor(rec.subject, rec.ref, rec.topicTitle);
+    el.appendChild(div);
+  });
+  document.getElementById('mistakeSelCount').textContent = mistakeSelected.size;
+}
+function selectAllMistakes(on){
+  const list = filteredMistakes();
+  if(on){ list.forEach(rec=>mistakeSelected.add(recordKey(rec.subject,rec.ref))); }
+  else { list.forEach(rec=>mistakeSelected.delete(recordKey(rec.subject,rec.ref))); }
+  renderMistakeBook();
+}
+
+/* ---- Export mistake book ---- */
+async function exportMistakeBook(kind){
+  if(!mistakeSelected.size){ toast('請先勾選要匯出的題目'); return; }
+  const items = allRecordsList().filter(rec=>mistakeSelected.has(recordKey(rec.subject,rec.ref)))
+    .sort((a,b)=> a.subject.localeCompare(b.subject) || a.ref.localeCompare(b.ref));
+  toast('整理錯題本中...');
+  let bodyHtml = '';
+  for(const rec of items){
+    let imagesHtml = '';
+    for(const fid of (rec.fileIds||[])){
+      const meta = (STATE.fileMeta && STATE.fileMeta[fid]) || {name:'附件', type:''};
+      const dataUrl = await loadFile(fid);
+      if(dataUrl && meta.type && meta.type.startsWith('image/')){
+        imagesHtml += `<img src="${dataUrl}" style="max-width:100%;margin:8px 0;border-radius:6px;border:1px solid #ddd;">`;
+      } else if(dataUrl){
+        imagesHtml += `<div style="font-size:12px;color:#666;margin:4px 0;">📎 附件：${meta.name}（PDF，請另行查閱原始檔）</div>`;
+      }
+    }
+    const badgeColor = rec.color==='red' ? '#ff5f56' : rec.color==='yellow' ? '#ffb020' : rec.color==='green' ? '#5fd97a' : '#999';
+    const badgeText = rec.color==='red' ? '紅卡・待加強' : rec.color==='yellow' ? '黃卡・普通' : rec.color==='green' ? '綠卡・已熟悉' : '';
+    bodyHtml += `
+      <div style="page-break-inside:avoid; margin-bottom:22px; padding-bottom:16px; border-bottom:1px solid #ddd;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <span style="font-family:monospace; font-size:15px; font-weight:bold; color:#1a1a2e;">${rec.subject} ${rec.ref}</span>
+          ${badgeText?`<span style="font-size:11px; padding:2px 10px; border-radius:12px; background:${badgeColor}22; color:${badgeColor}; font-weight:bold;">${badgeText}</span>`:''}
+        </div>
+        <div style="font-size:13px; color:#555; margin-bottom:8px;">${(rec.topicTitle||'').replace(/</g,'&lt;')}</div>
+        ${rec.note?`<div style="font-size:13px; color:#222; line-height:1.7; white-space:pre-line; background:#f7f7f9; padding:10px 12px; border-radius:8px;">${rec.note.replace(/</g,'&lt;')}</div>`:''}
+        ${imagesHtml}
+      </div>`;
+  }
+  const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>錯題本</title>
+    <style>
+      body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif; padding:30px; color:#1a1a2e; max-width:800px; margin:0 auto;}
+      h1{font-size:20px; border-bottom:3px solid #ffb020; padding-bottom:10px;}
+      .meta{color:#888; font-size:12px; margin-bottom:24px;}
+      @media print{ body{padding:10px;} }
+    </style></head><body>
+    <h1>技師考試 錯題本</h1>
+    <div class="meta">產生時間：${new Date().toLocaleString('zh-TW')}　共 ${items.length} 題</div>
+    ${bodyHtml}
+    </body></html>`;
+
+  if(kind==='pdf'){
+    const w = window.open('', '_blank');
+    if(!w){ toast('請允許彈出視窗，才能開啟列印頁面'); return; }
+    w.document.write(fullHtml);
+    w.document.close();
+    setTimeout(()=>{ w.focus(); w.print(); }, 400);
+  } else {
+    const blob = new Blob(['\ufeff', fullHtml], {type:'application/msword'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `錯題本_${new Date().toISOString().slice(0,10)}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('已下載 Word 檔');
+  }
+}
+
+function paperKey(subject,year){ return subject+'-'+year; }
+function isPaperDone(subject,year){
+  return STATE.logs.some(l=>l.round===2 && l.subject===subject && String(l.year)===String(year));
+}
+function countPapersDone(subject){ return YEARS.filter(y=>isPaperDone(subject,y)).length; }
+function yearQuestions(subject,year){ return (YEAR_INDEX[subject] && YEAR_INDEX[subject][year]) || []; }
+
+function renderTimerSubjectGrid(){
+  const grid=document.getElementById('timerSubjectGrid');
+  grid.innerHTML='';
+  SUBJECTS.forEach(s=>{
+    const b=document.createElement('button');
+    if(timerRound===1){
+      const cnt=todayTopicsFor(s).length;
+      b.innerHTML = s + (cnt? `<br><span style="font-size:9px;opacity:.8">今日 ${cnt}</span>` : '');
+    } else {
+      const done=countPapersDone(s);
+      b.innerHTML = s + `<br><span style="font-size:9px;opacity:.8">已複習 ${done}/25</span>`;
+    }
+    b.className = timerSubject===s ? 'active' : '';
+    b.onclick=()=>{ timerSubject=s; timerTopicId=null; timerYear=null; renderTimerSubjectGrid(); renderTopicPicker(); renderYearPicker(); updateStartBtn(); };
+    grid.appendChild(b);
+  });
+}
+function renderTopicPicker(){
+  const wrap=document.getElementById('topicPickerWrap');
+  const list=document.getElementById('topicPickerList');
+  const hint=document.getElementById('topicPickerHint');
+  if(!timerSubject || timerRound===2){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const todays = todayTopicsFor(timerSubject);
+  const pool = todays.length ? todays : TOPICS[timerSubject];
+  hint.textContent = todays.length
+    ? `選擇要刷的考點（${timerSubject} 今日待讀 ${todays.length} 個）`
+    : `尚未在「計畫」勾選 ${timerSubject} 的今日待讀，顯示全部考點`;
+  list.innerHTML='';
+  pool.forEach(t=>{
+    const row=document.createElement('div');
+    row.className='topic-pick'+(timerTopicId===t.id?' selected':'');
+    row.innerHTML = `<span class="radio"></span><span class="tp-title">${String(t.id).padStart(2,'0')}・${t.title}</span>`;
+    row.onclick=()=>{ timerTopicId = timerTopicId===t.id ? null : t.id; renderTopicPicker(); updateStartBtn(); };
+    list.appendChild(row);
+  });
+  const noneRow=document.createElement('div');
+  noneRow.className='topic-pick'+(timerTopicId===null?' selected':'');
+  noneRow.innerHTML=`<span class="radio"></span><span class="tp-title" style="color:var(--sub-2)">不指定考點，只記錄科目</span>`;
+  noneRow.onclick=()=>{ timerTopicId=null; renderTopicPicker(); updateStartBtn(); };
+  list.appendChild(noneRow);
+}
+function renderYearPicker(){
+  const wrap=document.getElementById('yearPickerWrap');
+  if(!timerSubject || timerRound!==2){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  const grid=document.getElementById('yearGrid');
+  grid.innerHTML='';
+  YEARS.forEach(y=>{
+    const qs=yearQuestions(timerSubject,y);
+    const b=document.createElement('button');
+    b.textContent=y;
+    b.className = (timerYear===y?'active':'') + (isPaperDone(timerSubject,y)?' done':'') + (!qs.length?' empty':'');
+    b.disabled = !qs.length;
+    b.onclick=()=>{ timerYear=y; renderYearPicker(); updateStartBtn(); };
+    grid.appendChild(b);
+  });
+  document.getElementById('yearPickerHint').textContent = timerYear
+    ? `${timerSubject} · ${timerYear} 年考卷（共 ${yearQuestions(timerSubject,timerYear).length} 題）・綠色打勾表示已複習過`
+    : `選擇要複習的年度考卷（${timerSubject}）・綠色打勾表示已複習過`;
+  renderYearPreview();
+  const pdfWrap=document.getElementById('yearPdfBtnWrap');
+  if(pdfWrap){
+    pdfWrap.innerHTML = timerYear
+      ? `<span class="pdf-btn" onclick="openPdf('${timerSubject}','${timerYear}')">📄 開啟 ${timerYear} 年 ${timerSubject} 考卷 PDF</span>`
+      : '';
+  }
+}
+function renderYearPreview(){
+  const el=document.getElementById('yearPreview');
+  el.innerHTML='';
+  if(!timerYear) return;
+  yearQuestions(timerSubject,timerYear).forEach(q=>{
+    const row=document.createElement('div');
+    row.className='year-preview-row';
+    row.innerHTML = `<span class="ref">${q.ref}</span>${q.topicTitle}`;
+    el.appendChild(row);
+  });
+}
+function updateStartBtn(){
+  document.getElementById('startSessionBtn').disabled = timerRound===2 ? !(timerSubject && timerYear) : !timerSubject;
+}
+
+function startTimerFor(subject, topicId){
+  switchView('timer');
+  setRound(1);
+  timerSubject = subject;
+  timerTopicId = topicId;
+  renderTimerSubjectGrid();
+  renderTopicPicker();
+  updateStartBtn();
+  toast(`已帶入 ${subject} 考點，按「開始計時」即可`);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function setRound(r){
+  timerRound=r;
+  timerTopicId=null; timerYear=null;
+  document.getElementById('roundBtn1').classList.toggle('active', r===1);
+  document.getElementById('roundBtn2').classList.toggle('active', r===2);
+  document.getElementById('limitNote').textContent = r===1 ? '電工學每題 40 分鐘・其餘每題 30 分鐘' : '選定某一年度的整份考卷，固定 2 小時（含檢討）';
+  renderTimerSubjectGrid();
+  renderTopicPicker();
+  renderYearPicker();
+  updateStartBtn();
+}
+function limitMinutesFor(subject){ return LIMIT_MIN[subject] || DEFAULT_LIMIT; }
+
+function parseYearRefs(str){
+  if(!str) return [];
+  return str.split(',').map(s=>s.trim()).filter(Boolean);
+}
+function updateQuestionDisplay(){
+  const numEl=document.getElementById('qNum');
+  const labelEl=document.getElementById('qLabel');
+  if(!numEl) return;
+  if(questionRefs.length){
+    if(questionRefIdx < questionRefs.length){
+      numEl.textContent = questionRefs[questionRefIdx];
+      labelEl.textContent = `第 ${questionRefIdx+1} / ${questionRefs.length} 題・依真題年份-題號`;
+    } else {
+      numEl.textContent = `加練 ${questionRefIdx - questionRefs.length + 1}`;
+      labelEl.textContent = '清單已刷完，額外加練中';
+    }
+  } else {
+    numEl.textContent = questionIndex;
+    labelEl.textContent = '目前第幾題';
+  }
+}
+
+function startSession(){
+  if(!timerSubject){ toast('請先選擇科目'); return; }
+  if(timerRound===2 && !timerYear){ toast('請先選擇要複習的年度考卷'); return; }
+  document.getElementById('timerSetup').style.display='none';
+  document.getElementById('timerRunning').style.display='block';
+  questionIndex=1;
+  questionRefIdx=0;
+  sessionMinutesAccum=0;
+  sessionStartTs = nowMs();
+  round1MarkDone=false;
+  const topicObjForRefs = timerRound===1 && timerTopicId!=null ? TOPICS[timerSubject].find(t=>t.id===timerTopicId) : null;
+  questionRefs = topicObjForRefs ? parseYearRefs(topicObjForRefs.years) : [];
+  document.getElementById('qcounterWrap').style.display = timerRound===1 ? 'flex' : 'none';
+  document.getElementById('nextBtn').style.display = timerRound===1 ? 'block' : 'none';
+  document.getElementById('round2Checklist').style.display = timerRound===2 ? 'block' : 'none';
+  const topicTitle = topicObjForRefs ? topicObjForRefs.title : null;
+  document.getElementById('runningLabel').textContent = timerRound===2
+    ? `${timerSubject} · ${timerYear} 年 · 第二輪整科複習`
+    : (topicTitle ? `${timerSubject} · ${topicTitle}` : `${timerSubject} · 第一輪逐題限時`);
+  const showRound1Note = timerRound===1 && timerTopicId!=null;
+  document.getElementById('round1TopicNote').style.display = showRound1Note ? 'block' : 'none';
+  if(showRound1Note){ document.getElementById('round1DoneBox').classList.remove('checked'); }
+  if(timerRound===2){ renderRound2Checklist(); }
+  setupTimerDuration(timerRound===1 ? limitMinutesFor(timerSubject)*60 : ROUND2_MIN*60);
+  updateQuestionDisplay();
+  renderPdfButton();
+  renderRecordQuickbar();
+  paused=false;
+  document.getElementById('pauseBtn').textContent='暫停';
+  runTicker();
+}
+function toggleRound1Done(){
+  round1MarkDone=!round1MarkDone;
+  document.getElementById('round1DoneBox').classList.toggle('checked', round1MarkDone);
+}
+function renderRound2Checklist(){
+  const list = yearQuestions(timerSubject, timerYear);
+  round2CheckedIds = new Set();
+  const el=document.getElementById('round2Checklist');
+  el.innerHTML = `<div style="font-size:12px;color:var(--sub);margin-bottom:6px;">${timerYear} 年 ${timerSubject} 考卷・逐題檢討勾選，可同時標記紅黃綠卡與筆記</div>`;
+  list.forEach((q,idx)=>{
+    const row=document.createElement('div');
+    row.className='ci';
+    const rec = getRecord(timerSubject, q.ref);
+    const hasNote = !!((rec.note&&rec.note.trim()) || (rec.fileIds&&rec.fileIds.length));
+    row.innerHTML = `<span class="box" data-idx="${idx}">✓</span>
+      <span class="ci-text"><span class="ref-mono">${q.ref}</span>${q.topicTitle}</span>
+      <span class="ci-cards">
+        <span class="mini-card mini-red ${rec.color==='red'?'active':''}" data-c="red">🔴</span>
+        <span class="mini-card mini-yellow ${rec.color==='yellow'?'active':''}" data-c="yellow">🟡</span>
+        <span class="mini-card mini-green ${rec.color==='green'?'active':''}" data-c="green">🟢</span>
+        <span class="mini-note-btn ${hasNote?'has-note':''}">📝</span>
+      </span>`;
+    row.querySelector('.box').onclick=()=>{
+      const box=row.querySelector('.box');
+      if(round2CheckedIds.has(idx)){ round2CheckedIds.delete(idx); box.classList.remove('checked'); }
+      else{ round2CheckedIds.add(idx); box.classList.add('checked'); }
+    };
+    row.querySelectorAll('.mini-card').forEach(b=>{
+      b.onclick=(e)=>{
+        e.stopPropagation();
+        setRecordColor(timerSubject, q.ref, b.dataset.c);
+        const updated = getRecord(timerSubject, q.ref);
+        row.querySelectorAll('.mini-card').forEach(x=>x.classList.toggle('active', x.dataset.c===updated.color));
+      };
+    });
+    row.querySelector('.mini-note-btn').onclick=(e)=>{
+      e.stopPropagation();
+      openRecordEditor(timerSubject, q.ref, q.topicTitle);
+    };
+    el.appendChild(row);
+  });
+}
+function setupTimerDuration(sec){
+  totalSec=sec; remainingSec=sec;
+  updateRing();
+}
+const RING_CIRC = 2*Math.PI*100;
+function updateRing(){
+  const frac = Math.max(0, remainingSec/totalSec);
+  const el=document.getElementById('ringFg');
+  el.setAttribute('stroke-dasharray', RING_CIRC.toFixed(1));
+  el.setAttribute('stroke-dashoffset', (RING_CIRC*(1-frac)).toFixed(1));
+  const mins=Math.floor(remainingSec/60), secs=remainingSec%60;
+  const big=document.getElementById('clockBig');
+  big.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  big.classList.remove('warn','danger');
+  if(remainingSec<=0){ el.style.stroke='var(--red)'; big.classList.add('danger'); }
+  else if(frac<0.15){ el.style.stroke='var(--red)'; big.classList.add('warn'); }
+  else if(frac<0.4){ el.style.stroke='var(--amber)'; }
+  else{ el.style.stroke='var(--amber)'; }
+  updateQuestionDisplay();
+}
+function runTicker(){
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    if(paused) return;
+    remainingSec--;
+    if(remainingSec<=0){
+      remainingSec=0;
+      beep();
+      if(navigator.vibrate) navigator.vibrate([200,100,200]);
+      toast('時間到！');
+    }
+    updateRing();
+  },1000);
+}
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pauseBtn').textContent = paused ? '繼續' : '暫停';
+}
+function nextQuestion(){
+  const used = totalSec - remainingSec;
+  sessionMinutesAccum += used/60;
+  questionIndex++;
+  questionRefIdx++;
+  setupTimerDuration(limitMinutesFor(timerSubject)*60);
+  updateQuestionDisplay();
+  renderPdfButton();
+  renderRecordQuickbar();
+  toast('已記錄本題，開始下一題');
+}
+function beep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=880;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    o.start(); o.stop(ctx.currentTime+0.4);
+  }catch(e){}
+}
+function endSession(){
+  clearInterval(timerInterval);
+  const used = totalSec - remainingSec;
+  let minutes;
+  if(timerRound===1){
+    sessionMinutesAccum += used/60;
+    minutes = Math.round(sessionMinutesAccum*10)/10;
+  } else {
+    minutes = Math.round(used/60*10)/10;
+  }
+  const topicObj = timerRound===1 && timerTopicId!=null ? TOPICS[timerSubject].find(t=>t.id===timerTopicId) : null;
+  const yearList = timerRound===2 ? yearQuestions(timerSubject, timerYear) : [];
+  if(minutes>0){
+    const doneRefsCount = Math.min(questionRefIdx+1, questionRefs.length);
+    const refsSummary = questionRefs.length ? `已刷 ${doneRefsCount}/${questionRefs.length} 題（${questionRefs.slice(0,doneRefsCount).join('、')}）` : `完成 ${questionIndex} 題`;
+    const log = {
+      date: new Date(nowMs()).toISOString().slice(0,10),
+      subject: timerSubject,
+      round: timerRound,
+      topicId: timerRound===1 ? timerTopicId : null,
+      topicTitle: topicObj ? topicObj.title : null,
+      year: timerRound===2 ? timerYear : null,
+      minutes: minutes,
+      note: timerRound===1
+        ? (topicObj ? `${topicObj.title}・${refsSummary}` : `完成 ${questionIndex} 題`)
+        : `${timerYear} 年考卷複習・勾選 ${round2CheckedIds.size}/${yearList.length} 題`
+    };
+    STATE.logs.unshift(log);
+    if(timerRound===1 && topicObj && round1MarkDone){
+      setStatus(timerSubject, topicObj.id, 'done');
+    }
+    saveState();
+    toast('已儲存本次讀書記錄');
+  }
+  document.getElementById('timerSetup').style.display='flex';
+  document.getElementById('timerRunning').style.display='none';
+  document.getElementById('pdfBtnWrap').innerHTML='';
+  document.getElementById('recordQuickbar').style.display='none';
+  timerSubject=null;
+  timerTopicId=null;
+  timerYear=null;
+  document.getElementById('startSessionBtn').disabled=true;
+  renderTimerSubjectGrid();
+  renderTopicPicker();
+  renderYearPicker();
+  renderHome();
+}
+
+/* ================= LOG RENDER ================= */
+function renderLog(){
+  const totalMin = STATE.logs.reduce((s,l)=>s+l.minutes,0);
+  document.getElementById('statTotalHours').textContent=(totalMin/60).toFixed(1)+'h';
+  document.getElementById('statSessions').textContent=STATE.logs.length;
+  document.getElementById('statTopicsDone').textContent=countDoneAll()+'/'+TOTAL_TOPICS;
+  document.getElementById('statStreak').textContent=computeStreak()+' 天';
+  const totalPapers = SUBJECTS.reduce((s,subj)=>s+countPapersDone(subj),0);
+  document.getElementById('statPapersDone').textContent = totalPapers+'/'+(SUBJECTS.length*25);
+  document.getElementById('statAvgMin').textContent = STATE.logs.length ? Math.round(totalMin/STATE.logs.length)+'m' : '0m';
+
+  const list=document.getElementById('logList');
+  list.innerHTML='';
+  if(!STATE.logs.length){ list.innerHTML='<div class="empty-state">還沒有任何讀書記錄，去「計時」頁籤開始第一場刷題吧。</div>'; return; }
+  STATE.logs.slice(0,60).forEach((l,idx)=>{
+    const div=document.createElement('div');
+    div.className='logitem';
+    div.innerHTML=`<span class="d">${l.date.slice(5)}</span><span class="badge">${l.subject}${l.year?'・'+l.year:''}</span><span class="txt">${l.round===1?'第一輪':'第二輪'}・${l.note}</span><span class="m">${l.minutes}m</span><span class="del" data-idx="${idx}">✕</span>`;
+    div.querySelector('.del').onclick=()=>deleteLog(idx);
+    list.appendChild(div);
+  });
+}
+function showConfirm(message, onYes){
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.innerHTML = `<div class="modal">
+    <h3>確認</h3>
+    <div style="font-size:13px; color:var(--sub); line-height:1.6; white-space:pre-line;">${message}</div>
+    <div class="timer-controls" style="margin-top:18px;">
+      <button class="btn btn-secondary" id="confirmNoBtn">取消</button>
+      <button class="btn btn-danger" id="confirmYesBtn">刪除</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  const close=()=>backdrop.remove();
+  backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) close(); });
+  backdrop.querySelector('#confirmNoBtn').onclick=close;
+  backdrop.querySelector('#confirmYesBtn').onclick=()=>{ close(); onYes(); };
+}
+function deleteLog(idx){
+  const l = STATE.logs[idx];
+  if(!l) return;
+  showConfirm(`刪除這筆記錄？\n${l.date} ・ ${l.subject} ・ ${l.minutes} 分鐘`, ()=>{
+    STATE.logs.splice(idx,1);
+    saveState();
+    renderLog();
+    renderHome();
+    toast('已刪除該筆記錄');
+  });
+}
+function resetAllConfirm(){
+  showConfirm('確定要清除所有進度與紀錄嗎？此動作無法復原（包含已上傳的附件）。', async ()=>{
+    const oldFileIds = Object.keys(STATE.fileMeta||{});
+    for(const fid of oldFileIds){ await deleteFile(fid); }
+    STATE = JSON.parse(JSON.stringify(DEFAULTS));
+    saveState();
+    timerSubject=null; timerTopicId=null; timerYear=null;
+    mistakeSelected = new Set();
+    renderTimerSubjectGrid(); renderTopicPicker(); renderYearPicker();
+    renderHome(); renderPlan(); renderLog();
+    if(document.getElementById('mistakeList')) renderMistakeBook();
+    toast('已清除全部資料');
+  });
+}
+
+/* ================= INIT ================= */
+async function init(){
+  await loadState();
+  renderTimerSubjectGrid();
+  setRound(1);
+  renderHome();
+  await syncNetworkTime();
+  tickClock();
+  setInterval(tickClock, 1000);
+  if(!STATE.examDate){ setTimeout(openDateModal, 400); }
+}
+init();
+</script>
+</body>
+</html>
