@@ -510,6 +510,22 @@ function deepMergeDefaults(saved){
   merged.records = Object.assign({}, base.records, saved.records||{});
   merged.fileMeta = Object.assign({}, base.fileMeta, saved.fileMeta||{});
   merged.logs = Array.isArray(saved.logs) ? saved.logs : [];
+  // Repair older records that are missing subject/ref (bug from quick-tap colour
+  // marking before this fix) — the record key itself is "subject|ref", so we can
+  // always recover the correct values from it.
+  let repaired = false;
+  Object.keys(merged.records).forEach(k=>{
+    const rec = merged.records[k];
+    if(rec && (!rec.subject || !rec.ref)){
+      const sepIdx = k.lastIndexOf('|');
+      if(sepIdx > -1){
+        rec.subject = rec.subject || k.slice(0, sepIdx);
+        rec.ref = rec.ref || k.slice(sepIdx+1);
+        repaired = true;
+      }
+    }
+  });
+  if(repaired){ STATE = merged; saveState(); }
   return merged;
 }
 let saveTimer=null;
@@ -1130,10 +1146,14 @@ function renderPdfButton(){
 /* ================= RECORDS (紅黃綠卡 / 筆記 / 附件 / 錯題本) ================= */
 function genId(){ return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 function recordKey(subject, ref){ return subject + '|' + ref; }
-function blankRecord(){ return {color:null, understood:null, note:'', fileIds:[], updatedAt:0}; }
+function blankRecord(subject, ref){ return {color:null, understood:null, note:'', fileIds:[], updatedAt:0, subject:subject||'', ref:ref||'', topicTitle:''}; }
 function getRecord(subject, ref){
   const k = recordKey(subject, ref);
-  return Object.assign(blankRecord(), STATE.records[k]);
+  const rec = Object.assign(blankRecord(subject, ref), STATE.records[k]);
+  // Defensive: older/partial records may be missing these — always ensure they're set.
+  rec.subject = rec.subject || subject || '';
+  rec.ref = rec.ref || ref || '';
+  return rec;
 }
 function hasRecordContent(rec){
   return !!(rec.color || (rec.note && rec.note.trim()) || (rec.fileIds && rec.fileIds.length));
@@ -1471,7 +1491,7 @@ async function exportMistakeBookInner(kind){
   if(!mistakeSelected.size){ toast('請先在下方題目左邊勾選✓，才能匯出（目前沒有勾選任何題目）'); return; }
 
   const items = allRecordsList().filter(rec=>mistakeSelected.has(recordKey(rec.subject,rec.ref)))
-    .sort((a,b)=> a.subject.localeCompare(b.subject) || a.ref.localeCompare(b.ref));
+    .sort((a,b)=> (a.subject||'').localeCompare(b.subject||'') || (a.ref||'').localeCompare(b.ref||''));
   const allFileIds = [...new Set(items.flatMap(rec=>rec.fileIds||[]))];
 
   let overlay = null, progressEl = null;
