@@ -250,10 +250,10 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
 .sync-dot.off{background:var(--red);}
 .sync-dot.pending{background:var(--amber); animation:pulse 1.2s infinite;}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="app">
@@ -1478,17 +1478,24 @@ async function exportMistakeBookInner(kind){
   const allFileIds = [...new Set(items.flatMap(rec=>rec.fileIds||[]))];
   toast(`整理錯題本中...（共 ${items.length} 題、${allFileIds.length} 個附件）`);
   const updateProgress = (msg)=>{
-    if(w && w.document && w.document.getElementById('loadingMsg')){
-      w.document.getElementById('loadingMsg').textContent = msg;
-    }
+    try{
+      if(w && !w.closed && w.document && w.document.getElementById('loadingMsg')){
+        w.document.getElementById('loadingMsg').textContent = msg;
+      }
+    }catch(e){ /* popup window may have navigated/closed — ignore, non-critical */ }
   };
   updateProgress(`正在讀取 ${allFileIds.length} 個附件（平行載入中）...`);
 
   const fileMap = {};
   let doneCount = 0;
-  await Promise.all(allFileIds.map(async (fid)=>{
-    const dataUrl = await loadFileWithTimeout(fid, 12000);
-    fileMap[fid] = dataUrl;
+  await Promise.allSettled(allFileIds.map(async (fid)=>{
+    try{
+      const dataUrl = await loadFileWithTimeout(fid, 12000);
+      fileMap[fid] = dataUrl;
+    }catch(e){
+      console.warn('failed to load attachment', fid, e);
+      fileMap[fid] = null;
+    }
     doneCount++;
     if(doneCount % 3 === 0 || doneCount === allFileIds.length){
       updateProgress(`已讀取附件 ${doneCount} / ${allFileIds.length}...`);
@@ -1935,6 +1942,15 @@ function resetAllConfirm(){
 }
 
 /* ================= INIT ================= */
+window.addEventListener('error', (e)=>{
+  console.error('Uncaught error:', e.message, e.filename, e.lineno, e.error);
+  toast('發生未預期的錯誤：'+(e.message||'請截圖console給開發者看'));
+});
+window.addEventListener('unhandledrejection', (e)=>{
+  console.error('Unhandled promise rejection:', e.reason);
+  toast('背景處理發生錯誤：'+(e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+});
+
 async function init(){
   await loadState();
   renderTimerSubjectGrid();
