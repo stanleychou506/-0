@@ -133,6 +133,10 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
 .pdf-btn-wrap{text-align:center; margin-top:14px; min-height:20px;}
 .years-chips{display:flex; flex-wrap:wrap; gap:6px;}
 .year-chip{font-family:var(--mono); font-size:11px; color:var(--teal); background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:5px 10px; cursor:pointer;}
+.year-chip-group{display:inline-flex; align-items:stretch; border-radius:14px; overflow:hidden; border:1px solid var(--line);}
+.year-chip-group .year-chip{border:none; border-radius:0; padding:5px 9px;}
+.year-chip-answer{display:flex; align-items:center; justify-content:center; padding:5px 8px; background:var(--panel-2); color:var(--sub-2); font-size:11px; cursor:pointer; border-left:1px solid var(--line);}
+.year-chip-answer.has-note{color:var(--amber); background:rgba(255,176,32,.12);}
 .year-chip:active{background:rgba(61,220,199,.18);}
 .years-hint{font-size:10.5px; color:var(--sub-2); margin-bottom:6px;}
 .limit-note{font-size:12px; color:var(--sub-2); text-align:center; font-family:var(--mono);}
@@ -360,7 +364,8 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
           <span class="qc-btn qc-red" data-color="red" onclick="quickSetColor('red')">🔴</span>
           <span class="qc-btn qc-yellow" data-color="yellow" onclick="quickSetColor('yellow')">🟡</span>
           <span class="qc-btn qc-green" data-color="green" onclick="quickSetColor('green')">🟢</span>
-          <span class="qc-note-btn" id="qcNoteBtn" onclick="openCurrentRecordEditor()">📝 筆記/補充</span>
+          <span class="qc-note-btn" id="qcNoteBtn" onclick="openCurrentRecordEditor()">📝 筆記</span>
+          <span class="qc-note-btn" id="qcAnswerBtn" onclick="openCurrentAnswerViewer()">📖 解答</span>
         </div>
 
         <div class="timer-controls">
@@ -412,6 +417,7 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
         <span class="filter-chip fc-yellow active" data-f="yellow" onclick="toggleMistakeFilter('yellow',this)">🟡 黃卡</span>
         <span class="filter-chip fc-green" data-f="green" onclick="toggleMistakeFilter('green',this)">🟢 綠卡</span>
         <span class="filter-chip" data-f="note" onclick="toggleMistakeFilter('note',this)">📝 有筆記</span>
+        <span class="filter-chip" data-f="answer" onclick="toggleMistakeFilter('answer',this)">📖 有解答</span>
       </div>
       <div class="subject-tabs" id="mistakeSubjectTabs" style="margin-bottom:4px;"></div>
       <div style="display:flex; gap:8px; margin:10px 0;">
@@ -1051,7 +1057,7 @@ function renderPlan(){
       <div class="topic-body">
         <div class="desc">${t.desc}</div>
         <div class="years-hint">點一下年份題號可直接開啟該年 PDF 考卷</div>
-        <div class="years-chips">${yearsChipsHtml(subject, t.years)}</div>
+        <div class="years-chips">${yearsChipsHtml(subject, t.years, t.title)}</div>
         <div class="actions">
           <div class="mini-btn ${status==='today'?'on-today':''}" onclick="event.stopPropagation(); setStatus('${subject}',${t.id},'${status==='today'?'none':'today'}'); renderPlan(); renderHome();">今日待讀</div>
           <div class="mini-btn ${status==='done'?'on-done':''}" onclick="event.stopPropagation(); setStatus('${subject}',${t.id},'${status==='done'?'none':'done'}'); renderPlan(); renderHome();">標記完成</div>
@@ -1119,10 +1125,15 @@ function showPdfModal(subject, year, url){
   backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) close(); });
 }
 function refToYear(ref){ const m = (ref||'').match(/^(\d+)-/); return m ? m[1] : null; }
-function yearsChipsHtml(subject, yearsStr){
+function yearsChipsHtml(subject, yearsStr, topicTitle){
   return yearsStr.split(',').map(s=>s.trim()).filter(Boolean).map(ref=>{
     const yr = refToYear(ref);
-    return `<span class="year-chip" onclick="openPdf('${subject}','${yr}')">${ref}</span>`;
+    const rec = getRecord(subject, ref);
+    const hasAnswer = !!(rec.answerFileIds && rec.answerFileIds.length);
+    return `<span class="year-chip-group">
+      <span class="year-chip" onclick="openPdf('${subject}','${yr}')">${ref}</span>
+      <span class="year-chip-answer ${hasAnswer?'has-note':''}" onclick="openAnswerViewer('${subject}','${ref}','${(topicTitle||'').replace(/'/g,"\\'")}')" title="解答">📖</span>
+    </span>`;
   }).join('');
 }
 function currentSessionYear(){
@@ -1146,7 +1157,7 @@ function renderPdfButton(){
 /* ================= RECORDS (紅黃綠卡 / 筆記 / 附件 / 錯題本) ================= */
 function genId(){ return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 function recordKey(subject, ref){ return subject + '|' + ref; }
-function blankRecord(subject, ref){ return {color:null, understood:null, note:'', fileIds:[], updatedAt:0, subject:subject||'', ref:ref||'', topicTitle:''}; }
+function blankRecord(subject, ref){ return {color:null, understood:null, note:'', fileIds:[], answerFileIds:[], updatedAt:0, subject:subject||'', ref:ref||'', topicTitle:''}; }
 function getRecord(subject, ref){
   const k = recordKey(subject, ref);
   const rec = Object.assign(blankRecord(subject, ref), STATE.records[k]);
@@ -1156,7 +1167,7 @@ function getRecord(subject, ref){
   return rec;
 }
 function hasRecordContent(rec){
-  return !!(rec.color || (rec.note && rec.note.trim()) || (rec.fileIds && rec.fileIds.length));
+  return !!(rec.color || (rec.note && rec.note.trim()) || (rec.fileIds && rec.fileIds.length) || (rec.answerFileIds && rec.answerFileIds.length));
 }
 function setRecordColor(subject, ref, color){
   const k = recordKey(subject, ref);
@@ -1260,6 +1271,81 @@ function escapeHtml(str){
   if(str==null) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+/* ---- answer viewer/uploader (lightweight, optimised for quick access while drilling) ---- */
+function openAnswerViewer(subject, ref, topicTitle){
+  const k = recordKey(subject, ref);
+  const rec = getRecord(subject, ref);
+  const backdrop=document.createElement('div');
+  backdrop.className='modal-backdrop';
+  backdrop.innerHTML = `<div class="modal" style="max-width:440px;max-height:90vh;overflow-y:auto;">
+    <h3>📖 ${subject} ・ <span style="font-family:var(--mono);color:var(--teal);">${ref}</span> 解答</h3>
+    <div style="font-size:11.5px;color:var(--sub-2);margin-bottom:14px;">${topicTitle||''}</div>
+    <div id="answerPhotoList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
+    <input type="file" id="answerFileInput" accept="image/*" multiple capture="environment" style="width:100%;font-size:12px;color:var(--sub);margin-bottom:14px;">
+    <div class="timer-controls">
+      <button class="btn btn-secondary" id="closeAnswerBtn" style="width:100%;">關閉</button>
+    </div>
+  </div>`;
+  document.body.appendChild(backdrop);
+  const close=()=>backdrop.remove();
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) close(); });
+  backdrop.querySelector('#closeAnswerBtn').onclick=close;
+
+  let localAnswerIds = (rec.answerFileIds||[]).slice();
+
+  async function renderPhotos(){
+    const wrap = backdrop.querySelector('#answerPhotoList');
+    if(!localAnswerIds.length){
+      wrap.innerHTML = `<div style="text-align:center;color:var(--sub-2);font-size:12.5px;padding:20px 0;">還沒有上傳這一題的解答，下方選照片加入</div>`;
+      return;
+    }
+    wrap.innerHTML = `<div style="text-align:center;color:var(--sub-2);font-size:11.5px;">載入解答照片中...</div>`;
+    const blocks = [];
+    for(const fid of localAnswerIds){
+      const dataUrl = await loadFileWithTimeout(fid, 10000);
+      const meta = (STATE.fileMeta && STATE.fileMeta[fid]) || {name:'解答'};
+      blocks.push(`<div style="position:relative;">
+        ${dataUrl ? `<img src="${dataUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line);display:block;">` : `<div style="padding:16px;text-align:center;color:var(--red);font-size:12px;border:1px solid var(--line);border-radius:10px;">⚠️ 讀取失敗：${meta.name}</div>`}
+        <span data-fid="${fid}" class="answer-del-btn" style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,.6); color:#fff; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer;">✕</span>
+      </div>`);
+    }
+    wrap.innerHTML = blocks.join('');
+    wrap.querySelectorAll('.answer-del-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        localAnswerIds = localAnswerIds.filter(x=>x!==btn.dataset.fid);
+        STATE.records[k] = Object.assign(getRecord(subject,ref), {answerFileIds: localAnswerIds, subject, ref, topicTitle: topicTitle||rec.topicTitle||''});
+        saveState();
+        renderPhotos();
+        toast('已移除該張解答照片');
+      };
+    });
+  }
+  renderPhotos();
+
+  backdrop.querySelector('#answerFileInput').onchange = async (e)=>{
+    const files = Array.from(e.target.files||[]);
+    if(!files.length) return;
+    toast('處理解答照片中...');
+    for(const file of files){
+      const id = genId();
+      try{
+        const processedFile = await convertHeicIfNeeded(file);
+        const dataUrl = await readAndCompressImage(processedFile);
+        const ok = await storeFile(id, dataUrl);
+        if(ok){
+          STATE.fileMeta = STATE.fileMeta || {};
+          STATE.fileMeta[id] = {name:file.name, type: processedFile.type || 'image/jpeg'};
+          localAnswerIds.push(id);
+        }
+      }catch(err){ console.warn('answer photo process failed', err); toast('這張照片處理失敗：'+file.name); }
+    }
+    STATE.records[k] = Object.assign(getRecord(subject,ref), {answerFileIds: localAnswerIds, subject, ref, topicTitle: topicTitle||rec.topicTitle||''});
+    saveState();
+    renderPhotos();
+    toast('解答已儲存');
+  };
+}
+
 function openRecordEditor(subject, ref, topicTitle){
   const k = recordKey(subject, ref);
   const rec = getRecord(subject, ref);
@@ -1381,6 +1467,12 @@ function openCurrentRecordEditor(){
   const topicObj = timerTopicId!=null ? (TOPICS[timerSubject].find(t=>t.id===timerTopicId)||{}).title : '';
   openRecordEditor(timerSubject, ref, topicObj);
 }
+function openCurrentAnswerViewer(){
+  const ref = currentRecordRef();
+  if(!ref || !timerSubject){ toast('這一題沒有對應的年份題號，無法查看解答'); return; }
+  const topicObj = timerTopicId!=null ? (TOPICS[timerSubject].find(t=>t.id===timerTopicId)||{}).title : '';
+  openAnswerViewer(timerSubject, ref, topicObj);
+}
 function renderRecordQuickbar(){
   const wrap = document.getElementById('recordQuickbar');
   if(!wrap) return;
@@ -1393,6 +1485,8 @@ function renderRecordQuickbar(){
   });
   const noteBtn = document.getElementById('qcNoteBtn');
   if(noteBtn) noteBtn.classList.toggle('has-note', !!(rec.note && rec.note.trim()) || (rec.fileIds&&rec.fileIds.length>0));
+  const answerBtn = document.getElementById('qcAnswerBtn');
+  if(answerBtn) answerBtn.classList.toggle('has-note', (rec.answerFileIds&&rec.answerFileIds.length>0));
 }
 
 /* ---- Mistake Book tab ---- */
@@ -1432,8 +1526,9 @@ function filteredMistakes(){
     if(mistakeSubjectFilter && rec.subject!==mistakeSubjectFilter) return false;
     const colorOk = rec.color && mistakeFilters.has(rec.color);
     const noteOk = mistakeFilters.has('note') && rec.note && rec.note.trim();
-    if(mistakeFilters.has('red')||mistakeFilters.has('yellow')||mistakeFilters.has('green')||mistakeFilters.has('note')){
-      return colorOk || noteOk;
+    const answerOk = mistakeFilters.has('answer') && rec.answerFileIds && rec.answerFileIds.length;
+    if(mistakeFilters.has('red')||mistakeFilters.has('yellow')||mistakeFilters.has('green')||mistakeFilters.has('note')||mistakeFilters.has('answer')){
+      return colorOk || noteOk || answerOk;
     }
     return true;
   }).sort((a,b)=> (b.updatedAt||0)-(a.updatedAt||0));
@@ -1452,6 +1547,7 @@ function renderMistakeBook(){
     const div=document.createElement('div');
     div.className='mistake-item';
     const fileCount = (rec.fileIds||[]).length;
+    const answerCount = (rec.answerFileIds||[]).length;
     div.innerHTML = `
       <div class="mi-top">
         <span class="mi-check ${checked?'checked':''}">${checked?'✓':''}</span>
@@ -1459,7 +1555,7 @@ function renderMistakeBook(){
         <span class="mi-title">${rec.subject} · <span style="color:var(--teal);font-family:var(--mono);">${rec.ref}</span> · ${rec.topicTitle||''}</span>
       </div>
       ${rec.note?`<div class="mi-note">${escapeHtml(rec.note)}</div>`:''}
-      ${fileCount?`<div class="mi-files">📎 ${fileCount} 個附件</div>`:''}
+      ${fileCount||answerCount?`<div class="mi-files">${fileCount?`📎 ${fileCount} 個筆記附件　`:''}${answerCount?`📖 ${answerCount} 張解答`:''}</div>`:''}
     `;
     div.querySelector('.mi-check').onclick=()=>{
       if(mistakeSelected.has(key)) mistakeSelected.delete(key); else mistakeSelected.add(key);
@@ -1492,7 +1588,7 @@ async function exportMistakeBookInner(kind){
 
   const items = allRecordsList().filter(rec=>mistakeSelected.has(recordKey(rec.subject,rec.ref)))
     .sort((a,b)=> (a.subject||'').localeCompare(b.subject||'') || (a.ref||'').localeCompare(b.ref||''));
-  const allFileIds = [...new Set(items.flatMap(rec=>rec.fileIds||[]))];
+  const allFileIds = [...new Set(items.flatMap(rec=>[...(rec.fileIds||[]), ...(rec.answerFileIds||[])]))];
 
   let overlay = null, progressEl = null;
   if(kind==='pdf'){
@@ -1553,6 +1649,16 @@ async function exportMistakeBookInner(kind){
         imagesHtml += `<div style="font-size:12px;color:#c00;margin:4px 0;">⚠️ 附件讀取逾時或失敗：${meta.name}</div>`;
       }
     }
+    let answerHtml = '';
+    for(const fid of (rec.answerFileIds||[])){
+      const meta = (STATE.fileMeta && STATE.fileMeta[fid]) || {name:'解答', type:''};
+      const dataUrl = fileMap[fid];
+      if(dataUrl){
+        answerHtml += `<img src="${dataUrl}" style="max-width:100%;margin:8px 0;border-radius:6px;border:1px solid #ddd;">`;
+      } else {
+        answerHtml += `<div style="font-size:12px;color:#c00;margin:4px 0;">⚠️ 解答讀取逾時或失敗：${meta.name}</div>`;
+      }
+    }
     const badgeColor = rec.color==='red' ? '#ff5f56' : rec.color==='yellow' ? '#ffb020' : rec.color==='green' ? '#5fd97a' : '#999';
     const badgeText = rec.color==='red' ? '紅卡・待加強' : rec.color==='yellow' ? '黃卡・普通' : rec.color==='green' ? '綠卡・已熟悉' : '';
     bodyHtml += `
@@ -1564,6 +1670,10 @@ async function exportMistakeBookInner(kind){
         <div style="font-size:13px; color:#555; margin-bottom:8px;">${(rec.topicTitle||'').replace(/</g,'&lt;')}</div>
         ${rec.note?`<div style="font-size:13px; color:#222; line-height:1.7; white-space:pre-line; background:#f7f7f9; padding:10px 12px; border-radius:8px;">${escapeHtml(rec.note)}</div>`:''}
         ${imagesHtml}
+        ${answerHtml?`<div style="margin-top:14px; padding-top:10px; border-top:1px dashed #ccc;">
+          <div style="font-size:12px; font-weight:bold; color:#0a7d5c; margin-bottom:6px;">📖 解答</div>
+          ${answerHtml}
+        </div>`:''}
       </div>`;
   }
   const titleHtml = `<h1 style="font-size:20px; border-bottom:3px solid #ffb020; padding-bottom:10px; color:#1a1a2e;">技師考試 錯題本</h1>
@@ -1773,13 +1883,15 @@ function renderRound2Checklist(){
     row.className='ci';
     const rec = getRecord(timerSubject, q.ref);
     const hasNote = !!((rec.note&&rec.note.trim()) || (rec.fileIds&&rec.fileIds.length));
+    const hasAnswer = !!(rec.answerFileIds&&rec.answerFileIds.length);
     row.innerHTML = `<span class="box" data-idx="${idx}">✓</span>
       <span class="ci-text"><span class="ref-mono">${q.ref}</span>${q.topicTitle}</span>
       <span class="ci-cards">
         <span class="mini-card mini-red ${rec.color==='red'?'active':''}" data-c="red">🔴</span>
         <span class="mini-card mini-yellow ${rec.color==='yellow'?'active':''}" data-c="yellow">🟡</span>
         <span class="mini-card mini-green ${rec.color==='green'?'active':''}" data-c="green">🟢</span>
-        <span class="mini-note-btn ${hasNote?'has-note':''}">📝</span>
+        <span class="mini-note-btn ${hasNote?'has-note':''}" title="筆記">📝</span>
+        <span class="mini-note-btn ${hasAnswer?'has-note':''}" title="解答">📖</span>
       </span>`;
     row.querySelector('.box').onclick=()=>{
       const box=row.querySelector('.box');
@@ -1794,10 +1906,9 @@ function renderRound2Checklist(){
         row.querySelectorAll('.mini-card').forEach(x=>x.classList.toggle('active', x.dataset.c===updated.color));
       };
     });
-    row.querySelector('.mini-note-btn').onclick=(e)=>{
-      e.stopPropagation();
-      openRecordEditor(timerSubject, q.ref, q.topicTitle);
-    };
+    const noteBtns = row.querySelectorAll('.mini-note-btn');
+    noteBtns[0].onclick=(e)=>{ e.stopPropagation(); openRecordEditor(timerSubject, q.ref, q.topicTitle); };
+    noteBtns[1].onclick=(e)=>{ e.stopPropagation(); openAnswerViewer(timerSubject, q.ref, q.topicTitle); };
     el.appendChild(row);
   });
 }
