@@ -244,6 +244,13 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
 .modal h3{margin:0 0 14px; font-size:15px;}
 .empty-state{text-align:center; padding:40px 20px; color:var(--sub-2); font-size:13px;}
 .toast{position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:var(--panel-2); border:1px solid var(--amber); color:var(--text); padding:10px 18px; border-radius:30px; font-size:12.5px; z-index:200; opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;}
+#printOverlay{ display:none; }
+#printOverlay.active{ display:block; position:fixed; inset:0; background:#fff; color:#111; z-index:500; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+@media print{
+  body > *:not(#printOverlay){ display:none !important; }
+  #printOverlay{ display:block !important; position:static !important; }
+  #printOverlayHeader{ display:none !important; }
+}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--sub-2);flex-shrink:0;}
 .sync-dot.on{background:var(--green); box-shadow:0 0 6px var(--green);}
@@ -1462,28 +1469,37 @@ async function exportMistakeBook(kind){
 async function exportMistakeBookInner(kind){
   console.log('exportMistakeBook called, kind=', kind, 'selected count=', mistakeSelected.size);
   if(!mistakeSelected.size){ toast('請先在下方題目左邊勾選✓，才能匯出（目前沒有勾選任何題目）'); return; }
-  // Open the window synchronously FIRST (before any awaits) so it's still
-  // recognised as a direct result of the user's click and doesn't get popup-blocked.
-  let w = null;
-  if(kind==='pdf'){
-    w = window.open('', '_blank');
-    if(!w){ toast('請允許這個網站的彈出視窗，才能開啟列印頁面（通常在網址列右側會有提示圖示）'); return; }
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>錯題本產生中...</title></head><body style="font-family:sans-serif;padding:40px;color:#666;" id="loadingMsg">正在整理錯題本內容，請稍候...</body></html>');
-  }
+
   const items = allRecordsList().filter(rec=>mistakeSelected.has(recordKey(rec.subject,rec.ref)))
     .sort((a,b)=> a.subject.localeCompare(b.subject) || a.ref.localeCompare(b.ref));
-
-  // Gather every unique attachment id across all selected items, then fetch them
-  // ALL IN PARALLEL (instead of one-by-one) — this is the main speed fix.
   const allFileIds = [...new Set(items.flatMap(rec=>rec.fileIds||[]))];
-  toast(`整理錯題本中...（共 ${items.length} 題、${allFileIds.length} 個附件）`);
-  const updateProgress = (msg)=>{
-    try{
-      if(w && !w.closed && w.document && w.document.getElementById('loadingMsg')){
-        w.document.getElementById('loadingMsg').textContent = msg;
-      }
-    }catch(e){ /* popup window may have navigated/closed — ignore, non-critical */ }
-  };
+
+  let overlay = null, progressEl = null;
+  if(kind==='pdf'){
+    // Show an IN-PAGE overlay instead of window.open(). Staying on the same tab
+    // means the async work below never gets throttled by the browser's
+    // background-tab power-saving (which is what caused it to hang before).
+    overlay = document.createElement('div');
+    overlay.id = 'printOverlay';
+    overlay.innerHTML = `
+      <div id="printOverlayHeader" style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid #ddd; background:#fafafa;">
+        <span style="font-weight:700; color:#1a1a2e;">錯題本預覽</span>
+        <div style="display:flex; gap:14px; align-items:center;">
+          <span id="printGoBtn" style="display:none; color:#0a7d5c; font-weight:700; cursor:pointer;">🖨️ 列印／存成PDF</span>
+          <span id="printCloseBtn" style="color:#999; cursor:pointer; font-size:20px; line-height:1;">✕</span>
+        </div>
+      </div>
+      <div id="printOverlayBody" style="padding:30px; max-width:800px; margin:0 auto;">
+        <div id="printProgress" style="color:#666; font-family:sans-serif;">正在整理錯題本內容，請稍候...</div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.classList.add('active');
+    progressEl = overlay.querySelector('#printProgress');
+    overlay.querySelector('#printCloseBtn').onclick = ()=> overlay.remove();
+  } else {
+    toast(`整理錯題本中...（共 ${items.length} 題、${allFileIds.length} 個附件）`);
+  }
+  const updateProgress = (msg)=>{ if(progressEl) progressEl.textContent = msg; };
   updateProgress(`正在讀取 ${allFileIds.length} 個附件（平行載入中）...`);
 
   const fileMap = {};
@@ -1530,24 +1546,20 @@ async function exportMistakeBookInner(kind){
         ${imagesHtml}
       </div>`;
   }
-  const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>錯題本</title>
-    <style>
-      body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif; padding:30px; color:#1a1a2e; max-width:800px; margin:0 auto;}
-      h1{font-size:20px; border-bottom:3px solid #ffb020; padding-bottom:10px;}
-      .meta{color:#888; font-size:12px; margin-bottom:24px;}
-      @media print{ body{padding:10px;} }
-    </style></head><body>
-    <h1>技師考試 錯題本</h1>
-    <div class="meta">產生時間：${new Date().toLocaleString('zh-TW')}　共 ${items.length} 題</div>
-    ${bodyHtml}
-    </body></html>`;
+  const titleHtml = `<h1 style="font-size:20px; border-bottom:3px solid #ffb020; padding-bottom:10px; color:#1a1a2e;">技師考試 錯題本</h1>
+    <div style="color:#888; font-size:12px; margin-bottom:24px;">產生時間：${new Date().toLocaleString('zh-TW')}　共 ${items.length} 題</div>`;
 
   if(kind==='pdf'){
-    w.document.open();
-    w.document.write(fullHtml);
-    w.document.close();
-    setTimeout(()=>{ w.focus(); w.print(); }, 400);
+    const bodyWrap = overlay.querySelector('#printOverlayBody');
+    bodyWrap.innerHTML = titleHtml + bodyHtml;
+    const goBtn = overlay.querySelector('#printGoBtn');
+    goBtn.style.display = 'inline';
+    goBtn.onclick = ()=> window.print();
+    toast('錯題本已整理完成，點右上角「列印／存成PDF」即可');
   } else {
+    const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>錯題本</title>
+      <style>body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif; padding:30px; color:#1a1a2e; max-width:800px; margin:0 auto;}</style>
+      </head><body>${titleHtml}${bodyHtml}</body></html>`;
     const blob = new Blob(['\ufeff', fullHtml], {type:'application/msword'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
