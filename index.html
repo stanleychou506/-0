@@ -253,6 +253,7 @@ h2.section-title::before{content:""; width:14px; height:2px; background:var(--am
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -1183,6 +1184,28 @@ function readFileAsDataUrl(file){
     reader.readAsDataURL(file);
   });
 }
+function isHeicFile(file){
+  const nameLower = (file.name||'').toLowerCase();
+  return nameLower.endsWith('.heic') || nameLower.endsWith('.heif')
+    || file.type === 'image/heic' || file.type === 'image/heif';
+}
+async function convertHeicIfNeeded(file){
+  if(!isHeicFile(file)) return file;
+  if(typeof heic2any === 'undefined'){
+    toast('HEIC 轉換工具還沒載入完成，這張照片先以原始格式儲存，之後預覽/匯出可能無法顯示');
+    return file;
+  }
+  try{
+    toast('偵測到 iPhone 照片格式，轉換中...');
+    const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 });
+    const blob = Array.isArray(converted) ? converted[0] : converted;
+    return new File([blob], (file.name||'photo').replace(/\.(heic|heif)$/i, '.jpg'), {type:'image/jpeg'});
+  }catch(err){
+    console.warn('HEIC conversion failed', err);
+    toast('這張照片格式轉換失敗，可能無法正常預覽，建議改傳 JPG/PNG');
+    return file;
+  }
+}
 function readAndCompressImage(file, maxWidth, quality){
   maxWidth = maxWidth || 1000; quality = quality || 0.65;
   return new Promise((resolve,reject)=>{
@@ -1286,14 +1309,15 @@ function openRecordEditor(subject, ref, topicTitle){
       const id = genId();
       let dataUrl;
       try{
-        dataUrl = file.type.startsWith('image/') ? await readAndCompressImage(file) : await readFileAsDataUrl(file);
-      }catch(err){ continue; }
-      const ok = await storeFile(id, dataUrl);
-      if(ok){
-        STATE.fileMeta = STATE.fileMeta || {};
-        STATE.fileMeta[id] = {name:file.name, type:file.type};
-        localFileIds.push(id);
-      }
+        const processedFile = await convertHeicIfNeeded(file);
+        dataUrl = processedFile.type.startsWith('image/') ? await readAndCompressImage(processedFile) : await readFileAsDataUrl(processedFile);
+        const ok = await storeFile(id, dataUrl);
+        if(ok){
+          STATE.fileMeta = STATE.fileMeta || {};
+          STATE.fileMeta[id] = {name:file.name, type: processedFile.type || file.type};
+          localFileIds.push(id);
+        }
+      }catch(err){ console.warn('file process failed', err); toast('這個檔案處理失敗：'+file.name); continue; }
     }
     renderFileList();
     toast('已加入附件');
@@ -1444,21 +1468,46 @@ async function exportMistakeBookInner(kind){
   if(kind==='pdf'){
     w = window.open('', '_blank');
     if(!w){ toast('請允許這個網站的彈出視窗，才能開啟列印頁面（通常在網址列右側會有提示圖示）'); return; }
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>錯題本產生中...</title></head><body style="font-family:sans-serif;padding:40px;color:#666;">正在整理錯題本內容，請稍候...</body></html>');
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>錯題本產生中...</title></head><body style="font-family:sans-serif;padding:40px;color:#666;" id="loadingMsg">正在整理錯題本內容，請稍候...</body></html>');
   }
   const items = allRecordsList().filter(rec=>mistakeSelected.has(recordKey(rec.subject,rec.ref)))
     .sort((a,b)=> a.subject.localeCompare(b.subject) || a.ref.localeCompare(b.ref));
-  toast('整理錯題本中...');
+
+  // Gather every unique attachment id across all selected items, then fetch them
+  // ALL IN PARALLEL (instead of one-by-one) — this is the main speed fix.
+  const allFileIds = [...new Set(items.flatMap(rec=>rec.fileIds||[]))];
+  toast(`整理錯題本中...（共 ${items.length} 題、${allFileIds.length} 個附件）`);
+  const updateProgress = (msg)=>{
+    if(w && w.document && w.document.getElementById('loadingMsg')){
+      w.document.getElementById('loadingMsg').textContent = msg;
+    }
+  };
+  updateProgress(`正在讀取 ${allFileIds.length} 個附件（平行載入中）...`);
+
+  const fileMap = {};
+  let doneCount = 0;
+  await Promise.all(allFileIds.map(async (fid)=>{
+    const dataUrl = await loadFileWithTimeout(fid, 12000);
+    fileMap[fid] = dataUrl;
+    doneCount++;
+    if(doneCount % 3 === 0 || doneCount === allFileIds.length){
+      updateProgress(`已讀取附件 ${doneCount} / ${allFileIds.length}...`);
+    }
+  }));
+  updateProgress('附件讀取完成，正在排版...');
+
   let bodyHtml = '';
   for(const rec of items){
     let imagesHtml = '';
     for(const fid of (rec.fileIds||[])){
       const meta = (STATE.fileMeta && STATE.fileMeta[fid]) || {name:'附件', type:''};
-      const dataUrl = await loadFileWithTimeout(fid, 8000);
+      const dataUrl = fileMap[fid];
       if(dataUrl && meta.type && meta.type.startsWith('image/')){
         imagesHtml += `<img src="${dataUrl}" style="max-width:100%;margin:8px 0;border-radius:6px;border:1px solid #ddd;">`;
       } else if(dataUrl){
         imagesHtml += `<div style="font-size:12px;color:#666;margin:4px 0;">📎 附件：${meta.name}（PDF，請另行查閱原始檔）</div>`;
+      } else {
+        imagesHtml += `<div style="font-size:12px;color:#c00;margin:4px 0;">⚠️ 附件讀取逾時或失敗：${meta.name}</div>`;
       }
     }
     const badgeColor = rec.color==='red' ? '#ff5f56' : rec.color==='yellow' ? '#ffb020' : rec.color==='green' ? '#5fd97a' : '#999';
